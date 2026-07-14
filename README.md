@@ -23,5 +23,3 @@ Workspace commands: `npm run dev:web`, `npm run dev:api`, `npm run build`.
 ## Planned Features
 
 Ticket management, RBAC, realtime updates, SLA management, knowledge base, file attachments (MinIO), email notifications, admin dashboard, audit logging.
-
-See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the full architecture spec.
