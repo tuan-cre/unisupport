@@ -1,0 +1,73 @@
+{
+  "common": {
+    "loading": "Loading...",
+    "saving": "Saving...",
+    "error": "An error occurred",
+    "success": "Success",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "delete": "Delete",
+    "edit": "Edit",
+    "create": "Create",
+    "search": "Search",
+    "filter": "Filter",
+    "noResults": "No results found"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "tickets": "Tickets",
+    "knowledgeBase": "Knowledge Base",
+    "admin": "Admin",
+    "profile": "Profile",
+    "logout": "Logout"
+  },
+  "auth": {
+    "signIn": "Sign In",
+    "signUp": "Sign Up",
+    "email": "Email",
+    "password": "Password",
+    "forgotPassword": "Forgot Password",
+    "resetPassword": "Reset Password",
+    "mfa": "Multi-Factor Authentication"
+  },
+  "ticket": {
+    "createTicket": "Create Ticket",
+    "ticketList": "Tickets",
+    "status": "Status",
+    "priority": "Priority",
+    "assignee": "Assignee",
+    "requester": "Requester",
+    "subject": "Subject",
+    "description": "Description",
+    "attachments": "Attachments",
+    "comments": "Comments"
+  },
+  "page": {
+    "dashboard": "Dashboard",
+    "tickets": "Tickets",
+    "ticketDetail": "Ticket Detail",
+    "createTicket": "Create Ticket",
+    "knowledgeBase": "Knowledge Base",
+    "kbArticle": "Article",
+    "profile": "Profile",
+    "changePassword": "Change Password",
+    "adminUsers": "Users",
+    "adminRoles": "Roles",
+    "adminDepartments": "Departments",
+    "adminKb": "Knowledge Base",
+    "adminSlas": "SLAs",
+    "adminReports": "Reports",
+    "adminProblems": "Problems",
+    "adminKnownErrors": "Known Errors",
+    "adminChanges": "Changes",
+    "adminAssets": "Assets",
+    "adminChat": "Chat",
+    "login": "Sign In",
+    "register": "Sign Up",
+    "forgotPassword": "Forgot Password",
+    "resetPassword": "Reset Password",
+    "mfa": "Multi-Factor Authentication",
+    "forbidden": "Forbidden",
+    "notFound": "Page Not Found"
+  }
+}
