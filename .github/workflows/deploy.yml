@@ -1,6 +1,3 @@
-# Deploy is handled server-side via cron polling (deploy-poll.sh).
-# The server checks for new commits every 5 minutes and auto-deploys.
-# This file exists so the workflow doesn't error on push to main.
 name: Deploy
 
 on:
@@ -8,7 +5,17 @@ on:
     branches: [main]
 
 jobs:
-  noop:
+  deploy:
     runs-on: ubuntu-latest
     steps:
-      - run: echo "Deploy handled by server-side cron polling (deploy-poll.sh)"
+      - uses: actions/checkout@v4
+
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1
+        with:
+          host: lhtuan.site
+          username: lhtuan
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          script: |
+            cd ~/unisupport
+            ./deploy.sh
