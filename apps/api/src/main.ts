@@ -21,11 +21,11 @@ async function bootstrap() {
   }
 
   app.enableCors({
-    origin: config.get<string>('WEB_ORIGIN') ?? 'http://localhost:5173',
+    origin: config.getOrThrow<string>('WEB_ORIGIN'),
     credentials: true,
   });
 
-  app.setGlobalPrefix('api');
+  app.setGlobalPrefix('api', { exclude: ['metrics'] });
   app.use(cookieParser());
   app.useLogger(app.get(PinoLogger));
 
@@ -41,7 +41,7 @@ async function bootstrap() {
 
   setupSwagger(app);
 
-  const port = config.get<number>('PORT') ?? 3001;
+  const port = config.getOrThrow<number>('PORT');
   await app.listen(port);
   Logger.log(`Server running on port ${port}`, 'Bootstrap');
 }
