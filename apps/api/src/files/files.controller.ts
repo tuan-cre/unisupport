@@ -35,8 +35,8 @@ export class FilesController {
 
   @ApiOperation({ summary: 'Download a file by ID' })
   @Get(':id')
-  async download(@Param('id') id: string, @Res() res: Response) {
-    const { stream, attachment } = await this.files.download(id);
+  async download(@Param('id') id: string, @Res() res: Response, @Req() req: Request) {
+    const { stream, attachment } = await this.files.download(id, req.user!.id);
     res.setHeader('Content-Type', attachment.mimeType);
     res.setHeader('Content-Disposition', `inline; filename="${attachment.originalName}"`);
     stream.pipe(res);
@@ -45,8 +45,8 @@ export class FilesController {
   @ApiOperation({ summary: 'Delete a file' })
   @Delete(':id')
   @HttpCode(HttpStatus.OK)
-  async remove(@Param('id') id: string) {
-    await this.files.remove(id);
+  async remove(@Param('id') id: string, @Req() req: Request) {
+    await this.files.remove(id, req.user!.id);
     return { success: true, message: 'File deleted' };
   }
 }

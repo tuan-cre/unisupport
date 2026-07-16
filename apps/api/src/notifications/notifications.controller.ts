@@ -1,4 +1,4 @@
-import { Controller, Get, Patch, Param, Req, UseGuards } from '@nestjs/common';
+import { Controller, Get, Patch, Param, Req, Query, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { NotificationsService } from './notifications.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -13,10 +13,14 @@ export class NotificationsController {
 
   @ApiOperation({ summary: 'List notifications for current user' })
   @Get()
-  async findAll(@Req() req: Request) {
-    const data = await this.ns.findByUser(req.user!.id);
+  async findAll(
+    @Req() req: Request,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+  ) {
+    const result = await this.ns.findByUser(req.user!.id, Number(page) || 1, Number(limit) || 20);
     const unread = await this.ns.countUnread(req.user!.id);
-    return { success: true, data, unread };
+    return { success: true, ...result, unread };
   }
 
   @ApiOperation({ summary: 'Mark notification as read' })

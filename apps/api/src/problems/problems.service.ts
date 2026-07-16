@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { Prisma } from '@prisma/client';
 import { CreateProblemDto } from './dto/create-problem.dto';
 import { UpdateProblemDto } from './dto/update-problem.dto';
 
@@ -7,17 +8,34 @@ import { UpdateProblemDto } from './dto/update-problem.dto';
 export class ProblemsService {
   constructor(private prisma: PrismaService) {}
 
-  async findAll() {
-    return this.prisma.problem.findMany({
-      include: {
-        assignedTo: { select: { id: true, firstName: true, lastName: true, email: true } },
-        createdBy: { select: { id: true, firstName: true, lastName: true, email: true } },
-        tickets: { include: { ticket: { select: { id: true, subject: true, status: true } } } },
-        knownErrors: { select: { id: true, subject: true } },
-        _count: { select: { changes: true } },
-      },
-      orderBy: { createdAt: 'desc' },
-    });
+  async findAll(page = 1, limit = 20, q?: string) {
+    const skip = (page - 1) * limit;
+    const where: Prisma.ProblemWhereInput = {};
+    if (q) {
+      where.OR = [
+        { subject: { contains: q, mode: 'insensitive' } },
+        { description: { contains: q, mode: 'insensitive' } },
+        { rootCause: { contains: q, mode: 'insensitive' } },
+        { workaround: { contains: q, mode: 'insensitive' } },
+      ];
+    }
+    const [data, total] = await this.prisma.$transaction([
+      this.prisma.problem.findMany({
+        where,
+        skip,
+        take: limit,
+        include: {
+          assignedTo: { select: { id: true, firstName: true, lastName: true, email: true } },
+          createdBy: { select: { id: true, firstName: true, lastName: true, email: true } },
+          tickets: { include: { ticket: { select: { id: true, subject: true, status: true } } } },
+          knownErrors: { select: { id: true, subject: true } },
+          _count: { select: { changes: true } },
+        },
+        orderBy: { createdAt: 'desc' },
+      }),
+      this.prisma.problem.count({ where }),
+    ]);
+    return { data, meta: { page, limit, total, totalPages: Math.ceil(total / limit) } };
   }
 
   async findOne(id: string) {

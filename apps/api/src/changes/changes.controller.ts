@@ -1,5 +1,6 @@
 import { Controller, Get, Post, Patch, Delete, Body, Param, UseGuards, Req } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
+import { Request } from 'express';
 import { ChangesService } from './changes.service';
 import { CreateChangeDto } from './dto/create-change.dto';
 import { UpdateChangeDto } from './dto/update-change.dto';
@@ -70,8 +71,9 @@ export class ChangesController {
     @Param('id') id: string,
     @Param('approvalId') approvalId: string,
     @Body() dto: UpdateApprovalDto,
+    @Req() req: Request,
   ) {
-    const data = await this.changes.updateApproval(id, approvalId, dto);
+    const data = await this.changes.updateApproval(id, approvalId, dto, req as any);
     return { success: true, message: 'Approval updated', data };
   }
 

@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Patch, Delete, Body, Param, UseGuards, Req } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Delete, Body, Param, Query, UseGuards, Req } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { KnownErrorsService } from './known-errors.service';
 import { CreateKnownErrorDto } from './dto/create-known-error.dto';
@@ -16,9 +16,15 @@ export class KnownErrorsController {
 
   @ApiOperation({ summary: 'List all known errors' })
   @Get()
-  async findAll() {
-    const data = await this.kes.findAll();
-    return { success: true, data };
+  async findAll(
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+    @Query('q') q?: string,
+    @Query('category') category?: string,
+    @Query('severity') severity?: string,
+  ) {
+    const result = await this.kes.findAll(Number(page) || 1, Number(limit) || 20, q, category, severity);
+    return { success: true, ...result };
   }
 
   @ApiOperation({ summary: 'Get known error by ID' })

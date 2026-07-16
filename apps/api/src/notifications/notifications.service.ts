@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import * as nodemailer from 'nodemailer';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../prisma/prisma.service';
@@ -42,12 +42,19 @@ export class NotificationsService {
     return notification;
   }
 
-  async findByUser(userId: string, limit = 20) {
-    return this.prisma.notification.findMany({
-      where: { userId },
-      orderBy: { createdAt: 'desc' },
-      take: limit,
-    });
+  async findByUser(userId: string, page = 1, limit = 20) {
+    const skip = (page - 1) * limit;
+    const where = { userId };
+    const [data, total] = await this.prisma.$transaction([
+      this.prisma.notification.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy: { createdAt: 'desc' },
+      }),
+      this.prisma.notification.count({ where }),
+    ]);
+    return { data, meta: { page, limit, total, totalPages: Math.ceil(total / limit) } };
   }
 
   async countUnread(userId: string) {
@@ -57,10 +64,12 @@ export class NotificationsService {
   }
 
   async markRead(id: string, userId: string) {
-    return this.prisma.notification.updateMany({
+    const result = await this.prisma.notification.updateMany({
       where: { id, userId },
       data: { readAt: new Date() },
     });
+    if (result.count === 0) throw new NotFoundException('Notification not found');
+    return result;
   }
 
   async markAllRead(userId: string) {
@@ -112,14 +121,19 @@ export class NotificationsService {
     ].filter((r) => r.id !== ticket.requesterId);
 
     const link = `/tickets/${ticket.id}`;
-    for (const r of recipients) {
-      await this.create({
-        userId: r.id,
-        type: 'ticket_created',
-        title: 'New ticket',
-        message: `${ticket.subject}`,
-        link,
+    if (recipients.length > 0) {
+      await this.prisma.notification.createMany({
+        data: recipients.map((r) => ({
+          userId: r.id,
+          type: 'ticket_created',
+          title: 'New ticket',
+          message: ticket.subject,
+          link,
+        })),
       });
+      for (const r of recipients) {
+        this.events.notifyUser(r.id, 'notification', { type: 'ticket_created', title: 'New ticket', message: ticket.subject });
+      }
     }
 
     await this.createAndEmail(ticket.requesterId, ticket.requesterEmail, {

@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Patch, Delete, Body, Param, UseGuards, Req } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Delete, Body, Param, Query, UseGuards, Req } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { ProblemsService } from './problems.service';
 import { CreateProblemDto } from './dto/create-problem.dto';
@@ -16,9 +16,13 @@ export class ProblemsController {
 
   @ApiOperation({ summary: 'List all problems' })
   @Get()
-  async findAll() {
-    const data = await this.problems.findAll();
-    return { success: true, data };
+  async findAll(
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+    @Query('q') q?: string,
+  ) {
+    const result = await this.problems.findAll(Number(page) || 1, Number(limit) || 20, q);
+    return { success: true, ...result };
   }
 
   @ApiOperation({ summary: 'Get problem by ID' })

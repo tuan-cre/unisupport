@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateAssetDto } from './dto/create-asset.dto';
 import { UpdateAssetDto } from './dto/update-asset.dto';
@@ -67,6 +67,10 @@ export class AssetsService {
 
   async remove(id: string) {
     await this.findOne(id);
+    const activeAssignments = await this.prisma.assetAssignment.count({ where: { assetId: id, returnedAt: null } });
+    if (activeAssignments > 0) throw new ConflictException('Cannot delete asset with active assignments');
+    const activeCheckouts = await this.prisma.hardwareCheckout.count({ where: { assetId: id, returnedAt: null } });
+    if (activeCheckouts > 0) throw new ConflictException('Cannot delete asset with active checkouts');
     await this.prisma.asset.delete({ where: { id } });
     return { message: 'Asset deleted' };
   }
@@ -74,16 +78,20 @@ export class AssetsService {
   // --- Assignments ---
   async assign(assetId: string, userId: string) {
     await this.findOne(assetId);
-    return this.prisma.assetAssignment.create({ data: { assetId, userId } });
+    const assignment = await this.prisma.assetAssignment.create({ data: { assetId, userId } });
+    await this.prisma.asset.update({ where: { id: assetId }, data: { status: 'ASSIGNED' } });
+    return assignment;
   }
 
   async unassign(assignmentId: string) {
     const a = await this.prisma.assetAssignment.findUnique({ where: { id: assignmentId } });
     if (!a) throw new NotFoundException('Assignment not found');
-    return this.prisma.assetAssignment.update({
+    const result = await this.prisma.assetAssignment.update({
       where: { id: assignmentId },
       data: { returnedAt: new Date() },
     });
+    await this.prisma.asset.update({ where: { id: a.assetId }, data: { status: 'AVAILABLE' } });
+    return result;
   }
 
   // --- Software Licenses ---
@@ -118,6 +126,9 @@ export class AssetsService {
 
   // --- Hardware Checkout ---
   async checkout(dto: CreateCheckoutDto) {
+    const asset = await this.prisma.asset.findUnique({ where: { id: dto.assetId } });
+    if (!asset) throw new NotFoundException('Asset not found');
+    if (asset.status !== 'AVAILABLE') throw new ConflictException('Asset is not available for checkout');
     return this.prisma.hardwareCheckout.create({
       data: {
         ...dto,
@@ -129,9 +140,11 @@ export class AssetsService {
   async checkin(checkoutId: string) {
     const co = await this.prisma.hardwareCheckout.findUnique({ where: { id: checkoutId } });
     if (!co) throw new NotFoundException('Checkout not found');
-    return this.prisma.hardwareCheckout.update({
+    const result = await this.prisma.hardwareCheckout.update({
       where: { id: checkoutId },
       data: { returnedAt: new Date() },
     });
+    await this.prisma.asset.update({ where: { id: co.assetId }, data: { status: 'AVAILABLE' } });
+    return result;
   }
 }
