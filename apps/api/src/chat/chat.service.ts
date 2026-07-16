@@ -1,9 +1,13 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { EventsGateway } from '../events/events.gateway';
 
 @Injectable()
 export class ChatService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private events: EventsGateway,
+  ) {}
 
   // --- Conversations ---
   async createConversation(data: {
@@ -35,15 +39,23 @@ export class ChatService {
     return conv;
   }
 
-  async listConversations(status?: string) {
-    return this.prisma.chatConversation.findMany({
-      where: status ? { status } : {},
-      include: {
-        _count: { select: { messages: true } },
-        user: { select: { id: true, firstName: true, lastName: true, email: true } },
-      },
-      orderBy: { updatedAt: 'desc' },
-    });
+  async listConversations(status?: string, page = 1, limit = 20) {
+    const skip = (page - 1) * limit;
+    const where = status ? { status } : {};
+    const [data, total] = await this.prisma.$transaction([
+      this.prisma.chatConversation.findMany({
+        where,
+        skip,
+        take: limit,
+        include: {
+          _count: { select: { messages: true } },
+          user: { select: { id: true, firstName: true, lastName: true, email: true } },
+        },
+        orderBy: { updatedAt: 'desc' },
+      }),
+      this.prisma.chatConversation.count({ where }),
+    ]);
+    return { data, meta: { page, limit, total, totalPages: Math.ceil(total / limit) } };
   }
 
   // --- Messages ---
@@ -59,9 +71,18 @@ export class ChatService {
       where: { id: conversationId },
       data: { updatedAt: new Date() },
     });
-    return this.prisma.chatMessage.create({
+    const message = await this.prisma.chatMessage.create({
       data: { conversationId, ...data },
     });
+
+    this.events.emitChatMessage(conversationId, message);
+    this.events.emitChatNotification({
+      conversationId,
+      message,
+      conversation: { subject: conv.subject, visitorName: conv.visitorName },
+    });
+
+    return message;
   }
 
   async closeConversation(id: string) {
@@ -84,9 +105,9 @@ export class ChatService {
     const description = `Chat conversation #${conv.id.slice(0, 8)}\n\n${msgText}`;
 
     let requesterId = conv.userId;
-    if (!requesterId) {
+    if (!requesterId && conv.visitorEmail) {
       const guest = await this.prisma.user.findFirst({
-        where: { email: conv.visitorEmail ?? 'guest@chat.local' },
+        where: { email: conv.visitorEmail },
       });
       if (guest) {
         requesterId = guest.id;

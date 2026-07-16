@@ -10,7 +10,7 @@ import { EventsGateway } from './events.gateway';
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: (config: ConfigService) => ({
-        secret: config.get<string>('JWT_SECRET') ?? 'dev-secret-change-in-production',
+        secret: config.getOrThrow<string>('JWT_SECRET'),
       }),
     }),
   ],

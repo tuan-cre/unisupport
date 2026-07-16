@@ -26,19 +26,22 @@ export class KbService {
     categoryId?: string;
     createdById: string;
   }) {
-    const slug = data.title
+    let slug = data.title
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/^-|-$/g, '');
     const existing = await this.prisma.article.findUnique({ where: { slug } });
-    if (existing) throw new ConflictException('Article with similar title exists');
+    if (existing) {
+      slug = `${slug}-${Date.now()}`;
+    }
     return this.prisma.article.create({
       data: { ...data, slug },
       include: { category: { select: { id: true, name: true } } },
     });
   }
 
-  async findAllArticles(categoryId?: string, q?: string, all?: boolean) {
+  async findAllArticles(categoryId?: string, q?: string, all?: boolean, page = 1, limit = 20) {
+    const skip = (page - 1) * limit;
     const where: any = {};
     if (!all) where.published = true;
     if (categoryId) where.categoryId = categoryId;
@@ -48,11 +51,17 @@ export class KbService {
         { content: { contains: q, mode: 'insensitive' } },
       ];
     }
-    return this.prisma.article.findMany({
-      where,
-      include: { category: { select: { id: true, name: true } } },
-      orderBy: { createdAt: 'desc' },
-    });
+    const [data, total] = await this.prisma.$transaction([
+      this.prisma.article.findMany({
+        where,
+        skip,
+        take: limit,
+        include: { category: { select: { id: true, name: true } } },
+        orderBy: { createdAt: 'desc' },
+      }),
+      this.prisma.article.count({ where }),
+    ]);
+    return { data, meta: { page, limit, total, totalPages: Math.ceil(total / limit) } };
   }
 
   async findArticle(slug: string) {

@@ -10,6 +10,8 @@ import {
   Req,
   HttpCode,
   HttpStatus,
+  UnauthorizedException,
+  Headers,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { ChatService } from './chat.service';
@@ -17,11 +19,15 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RequirePermissions } from '../tickets/guards/permissions.decorator';
 import { RolesGuard } from '../tickets/guards/roles.guard';
 import { Throttle } from '@nestjs/throttler';
+import { ConfigService } from '@nestjs/config';
 
 @ApiTags('Chat')
 @Controller('chat')
 export class ChatController {
-  constructor(private chat: ChatService) {}
+  constructor(
+    private chat: ChatService,
+    private config: ConfigService,
+  ) {}
 
   // --- Unauthenticated visitor endpoints ---
   @ApiOperation({ summary: 'Create a new chat conversation (visitor)' })
@@ -59,15 +65,21 @@ export class ChatController {
   // --- Authenticated agent endpoints ---
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard, RolesGuard)
+  @RequirePermissions('ticket:read')
   @ApiOperation({ summary: 'List all chat conversations' })
   @Get('conversations')
-  async listConversations(@Query('status') status?: string) {
-    const data = await this.chat.listConversations(status);
-    return { success: true, data };
+  async listConversations(
+    @Query('status') status?: string,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+  ) {
+    const result = await this.chat.listConversations(status, Number(page) || 1, Number(limit) || 20);
+    return { success: true, ...result };
   }
 
   @ApiBearerAuth()
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @RequirePermissions('ticket:read')
   @ApiOperation({ summary: 'Get conversation details' })
   @Get('conversations/:id')
   async getConversation(@Param('id') id: string) {
@@ -76,7 +88,8 @@ export class ChatController {
   }
 
   @ApiBearerAuth()
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @RequirePermissions('ticket:read')
   @ApiOperation({ summary: 'Send message as agent' })
   @Post('conversations/:id/agent-message')
   async agentMessage(@Param('id') id: string, @Req() req: any, @Body() body: { content: string }) {
@@ -90,7 +103,8 @@ export class ChatController {
   }
 
   @ApiBearerAuth()
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @RequirePermissions('ticket:read')
   @ApiOperation({ summary: 'Close a conversation' })
   @Patch('conversations/:id/close')
   async closeConversation(@Param('id') id: string) {
@@ -117,6 +131,7 @@ export class ChatController {
   @HttpCode(HttpStatus.OK)
   @Post('inbound-email')
   async inboundEmail(
+    @Headers('x-webhook-secret') secret: string,
     @Body()
     body: {
       from: string;
@@ -126,6 +141,9 @@ export class ChatController {
       inReplyTo?: string;
     },
   ) {
+    if (secret !== this.config.get<string>('WEBHOOK_SECRET')) {
+      throw new UnauthorizedException('Invalid webhook secret');
+    }
     const result = await this.chat.processInboundEmail(body);
     return { success: true, data: result };
   }

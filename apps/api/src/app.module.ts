@@ -1,8 +1,12 @@
 import { Module } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
+import { ThrottlerStorageRedisService } from '@nest-lab/throttler-storage-redis';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { LoggerModule } from 'nestjs-pino';
 import { PrometheusModule } from '@willsoto/nestjs-prometheus';
+
+const isPretty = process.env.NODE_ENV !== 'production' && process.env.NODE_ENV !== 'test';
 import { AppController } from './app.controller';
 import { AppConfigModule } from './config/config.module';
 import { PrismaModule } from './prisma/prisma.module';
@@ -26,13 +30,21 @@ import { KnownErrorsModule } from './known-errors/known-errors.module';
 import { ChangesModule } from './changes/changes.module';
 import { AssetsModule } from './assets/assets.module';
 import { ChatModule } from './chat/chat.module';
+import { JobsModule } from './jobs/jobs.module';
 
 @Module({
   imports: [
-    ThrottlerModule.forRoot([{ ttl: 60000, limit: 30 }]),
+    ThrottlerModule.forRootAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => ({
+        throttlers: [{ ttl: 60000, limit: 30 }],
+        storage: new ThrottlerStorageRedisService(config.getOrThrow<string>('REDIS_URL')),
+      }),
+    }),
     LoggerModule.forRoot({
       pinoHttp: {
-        transport: { target: 'pino-pretty', options: { colorize: true } },
+        transport: isPretty ? { target: 'pino-pretty', options: { colorize: true } } : undefined,
         autoLogging: true,
       },
     }),
@@ -59,6 +71,7 @@ import { ChatModule } from './chat/chat.module';
     ChangesModule,
     AssetsModule,
     ChatModule,
+    JobsModule,
   ],
   controllers: [AppController],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],

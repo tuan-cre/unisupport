@@ -31,9 +31,14 @@ export class KbController {
 
   @ApiOperation({ summary: 'List articles (optionally filter by category or search)' })
   @Get('articles')
-  async findAllArticles(@Query('categoryId') categoryId?: string, @Query('q') q?: string) {
-    const data = await this.kb.findAllArticles(categoryId, q);
-    return { success: true, data };
+  async findAllArticles(
+    @Query('categoryId') categoryId?: string,
+    @Query('q') q?: string,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+  ) {
+    const result = await this.kb.findAllArticles(categoryId, q, undefined, Number(page) || 1, Number(limit) || 20);
+    return { success: true, ...result };
   }
 
   @ApiOperation({ summary: 'Search articles by keyword' })
@@ -72,9 +77,12 @@ export class KbController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @RequirePermissions('user:manage')
   @Get('admin/articles')
-  async findAllArticlesAdmin() {
-    const data = await this.kb.findAllArticles(undefined, undefined, true);
-    return { success: true, data };
+  async findAllArticlesAdmin(
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+  ) {
+    const result = await this.kb.findAllArticles(undefined, undefined, true, Number(page) || 1, Number(limit) || 20);
+    return { success: true, ...result };
   }
 
   @ApiBearerAuth()

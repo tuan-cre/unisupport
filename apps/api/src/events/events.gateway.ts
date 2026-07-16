@@ -1,6 +1,7 @@
 import {
   WebSocketGateway,
   WebSocketServer,
+  SubscribeMessage,
   OnGatewayConnection,
   OnGatewayDisconnect,
 } from '@nestjs/websockets';
@@ -11,7 +12,10 @@ import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 @WebSocketGateway({
-  cors: { origin: '*', credentials: true },
+  cors: {
+    origin: (origin, cb) => cb(null, true),
+    credentials: true,
+  },
   namespace: '/ws',
 })
 export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
@@ -33,7 +37,7 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
     }
     try {
       const payload = this.jwtService.verify(token as string, {
-        secret: this.config.get<string>('JWT_SECRET'),
+        secret: this.config.getOrThrow<string>('JWT_SECRET'),
       });
       const userId = payload.sub as string;
       client.data.userId = userId;
@@ -44,6 +48,13 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
       client.join(`user:${userId}`);
     } catch {
       client.disconnect();
+    }
+  }
+
+  @SubscribeMessage('join')
+  handleChatJoin(client: Socket, room: string) {
+    if (room.startsWith('chat:') || room.startsWith('user:')) {
+      client.join(room);
     }
   }
 
@@ -63,5 +74,13 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   notifyUsers(userIds: string[], event: string, data: unknown) {
     userIds.forEach((uid) => this.notifyUser(uid, event, data));
+  }
+
+  emitChatMessage(conversationId: string, message: unknown) {
+    this.server.to(`chat:${conversationId}`).emit('chat:message', message);
+  }
+
+  emitChatNotification(message: unknown) {
+    this.server.emit('chat:new', message);
   }
 }
