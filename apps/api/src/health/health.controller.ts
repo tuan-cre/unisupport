@@ -16,8 +16,6 @@ export class HealthController {
   @HealthCheck()
   @ApiOperation({ summary: 'Deep health check for DB, Redis, MinIO, Mailpit' })
   async check() {
-    const config = (await import('@nestjs/config')).ConfigService;
-    // We'll add more checks as the services become available via Terminus indicators
     return this.health.check([
       () => this.prisma.$queryRaw`SELECT 1`.then(() => ({ db: { status: 'up' } })),
     ]);

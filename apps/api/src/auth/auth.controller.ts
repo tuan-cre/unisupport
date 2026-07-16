@@ -7,12 +7,15 @@ import {
   Body,
   UseGuards,
   Req,
+  Res,
   HttpCode,
   HttpStatus,
   Param,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
+import { AuthGuard } from '@nestjs/passport';
+import { ConfigService } from '@nestjs/config';
 import { AuthService } from './auth.service';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { RegisterDto } from './dto/register.dto';
@@ -21,12 +24,15 @@ import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
-import { Request } from 'express';
+import { Request, Response } from 'express';
 
 @ApiTags('Auth')
 @Controller('auth')
 export class AuthController {
-  constructor(private auth: AuthService) {}
+  constructor(
+    private auth: AuthService,
+    private config: ConfigService,
+  ) {}
 
   @ApiOperation({ summary: 'Register a new user' })
   @Throttle({ default: { limit: 3, ttl: 60000 } })
@@ -182,5 +188,41 @@ export class AuthController {
   async anonymize(@Req() req: Request) {
     await this.auth.anonymizeUser(req.user!.id);
     return { success: true, message: 'Account anonymized' };
+  }
+
+  // --- SAML SSO ---
+
+  @ApiOperation({ summary: 'Initiate SAML SSO login' })
+  @Get('saml/login')
+  @UseGuards(AuthGuard('saml'))
+  async samlLogin() {
+    // Passport handles the redirect to IdP
+  }
+
+  @ApiOperation({ summary: 'SAML SSO callback (ACS)' })
+  @Post('saml/callback')
+  @UseGuards(AuthGuard('saml'))
+  async samlCallback(@Req() req: Request, @Res() res: Response) {
+    const profile = req.user as unknown as { nameID: string; email: string; firstName: string; lastName: string };
+    const { user } = await this.auth.handleSamlLogin(profile);
+    const samlToken = this.auth.signSamlToken(user.id);
+    const webOrigin = this.config.getOrThrow<string>('WEB_ORIGIN');
+    res.redirect(`${webOrigin}/auth/saml/callback?token=${samlToken}`);
+  }
+
+  @ApiOperation({ summary: 'Exchange SAML token for JWT tokens' })
+  @HttpCode(HttpStatus.OK)
+  @Post('saml/exchange')
+  async exchangeSamlToken(@Body('token') token: string) {
+    const result = await this.auth.exchangeSamlToken(token);
+    return { success: true, message: 'SAML login successful', data: result };
+  }
+
+  @ApiOperation({ summary: 'Get SAML SP metadata XML' })
+  @Get('saml/metadata')
+  async samlMetadata(@Req() req: Request, @Res() res: Response) {
+    const { SamlStrategy } = require('./strategies/saml.strategy');
+    // metadata generation requires the strategy instance
+    res.status(501).json({ message: 'Metadata endpoint requires SAML to be configured' });
   }
 }

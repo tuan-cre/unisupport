@@ -85,9 +85,14 @@ export class AuthService {
 
     const defaultRole = await this.prisma.role.findUnique({ where: { name: 'user' } });
     if (!defaultRole) {
-      throw new ForbiddenException('Default role not found. Run seed first.');
+      const created = await this.prisma.role.create({ data: { name: 'user' } });
+      return this.completeRegistration(dto, created.id);
     }
 
+    return this.completeRegistration(dto, defaultRole.id);
+  }
+
+  private async completeRegistration(dto: RegisterDto, roleId: string) {
     const passwordHash = await bcrypt.hash(dto.password, 12);
     const verificationToken = crypto.randomBytes(32).toString('hex');
 
@@ -97,14 +102,14 @@ export class AuthService {
         firstName: dto.firstName,
         lastName: dto.lastName,
         passwordHash,
-        roleId: defaultRole.id,
+        roleId,
         emailVerificationToken: verificationToken,
       },
       select: this.userSelect,
     });
 
     const tokens = await this.generateTokens(user.id, user.email);
-    return { user, ...tokens, verificationToken };
+    return { user, ...tokens };
   }
 
   async login(dto: LoginDto) {
@@ -147,7 +152,7 @@ export class AuthService {
     // If MFA is enabled, issue a partial token
     if (user.totpEnabled) {
       const mfaToken = this.jwt.sign({ sub: user.id, type: 'mfa' }, { expiresIn: '5m' });
-      return { user: full, mfaRequired: true, mfaToken };
+      return { mfaRequired: true, mfaToken };
     }
 
     return { user: full, ...tokens };
@@ -201,7 +206,7 @@ export class AuthService {
       where: { id: userId },
       data: { emailVerificationToken: token },
     });
-    return { message: 'Verification email sent', verificationToken: token };
+    return { message: 'Verification email sent' };
   }
 
   // --- MFA / TOTP ---
@@ -249,7 +254,7 @@ export class AuthService {
     let payload: { sub: string; email: string; type: string };
     try {
       payload = this.jwt.verify(refreshToken, {
-        secret: this.config.get<string>('JWT_REFRESH_SECRET') ?? 'dev-refresh-secret-change',
+        secret: this.config.getOrThrow<string>('JWT_REFRESH_SECRET'),
       });
     } catch {
       throw new UnauthorizedException('Invalid refresh token');
@@ -262,7 +267,7 @@ export class AuthService {
     const session = await this.prisma.session.findFirst({
       where: {
         userId: payload.sub,
-        refreshTokenHash: await this.hashToken(refreshToken),
+        refreshTokenHash: this.hashToken(refreshToken),
         revokedAt: null,
         expiresAt: { gt: new Date() },
       },
@@ -286,9 +291,13 @@ export class AuthService {
   }
 
   async logout(userId: string, refreshToken: string) {
-    const hash = await this.hashToken(refreshToken);
-    await this.prisma.session.updateMany({
+    const hash = this.hashToken(refreshToken);
+    const session = await this.prisma.session.findFirst({
       where: { userId, refreshTokenHash: hash, revokedAt: null },
+    });
+    if (!session) return;
+    await this.prisma.session.update({
+      where: { id: session.id },
       data: { revokedAt: new Date() },
     });
   }
@@ -336,6 +345,11 @@ export class AuthService {
       return { message: 'If that email exists, a reset link has been sent.' };
     }
 
+    await this.prisma.passwordResetToken.updateMany({
+      where: { userId: user.id, usedAt: null, expiresAt: { gt: new Date() } },
+      data: { expiresAt: new Date() },
+    });
+
     const token = crypto.randomBytes(32).toString('hex');
     const expiresAt = new Date(Date.now() + 60 * 60 * 1000);
 
@@ -343,9 +357,9 @@ export class AuthService {
       data: { userId: user.id, token, expiresAt },
     });
 
-    const resetLink = `${this.config.get<string>('WEB_ORIGIN') ?? 'http://localhost:5173'}/reset-password?token=${token}`;
+    const resetLink = `${this.config.getOrThrow<string>('WEB_ORIGIN')}/reset-password?token=${token}`;
 
-    return { message: 'If that email exists, a reset link has been sent.', resetLink };
+    return { message: 'If that email exists, a reset link has been sent.' };
   }
 
   async resetPassword(token: string, newPassword: string) {
@@ -402,12 +416,12 @@ export class AuthService {
     const refreshToken = this.jwt.sign(
       { sub: userId, email, type: 'refresh' },
       {
-        secret: this.config.get<string>('JWT_REFRESH_SECRET') ?? 'dev-refresh-secret-change',
+        secret: this.config.getOrThrow<string>('JWT_REFRESH_SECRET'),
         expiresIn: `${REFRESH_TOKEN_EXPIRY_DAYS}d`,
       },
     );
 
-    const refreshTokenHash = await this.hashToken(refreshToken);
+    const refreshTokenHash = this.hashToken(refreshToken);
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + REFRESH_TOKEN_EXPIRY_DAYS);
 
@@ -418,8 +432,62 @@ export class AuthService {
     return { accessToken, refreshToken };
   }
 
-  private async hashToken(token: string): Promise<string> {
-    return bcrypt.hash(token, 10);
+  private hashToken(token: string): string {
+    return crypto.createHash('sha256').update(token).digest('hex');
+  }
+
+  async handleSamlLogin(profile: { nameID: string; email: string; firstName: string; lastName: string }) {
+    let user = await this.prisma.user.findUnique({ where: { samlId: profile.nameID } });
+    if (!user) {
+      user = await this.prisma.user.findUnique({ where: { email: profile.email } });
+      if (user) {
+        await this.prisma.user.update({
+          where: { id: user.id },
+          data: { samlId: profile.nameID },
+        });
+      }
+    }
+    if (!user) {
+      const defaultRole = await this.prisma.role.findUnique({ where: { name: 'user' } });
+      user = await this.prisma.user.create({
+        data: {
+          email: profile.email,
+          firstName: profile.firstName || profile.email.split('@')[0],
+          lastName: profile.lastName || '',
+          passwordHash: crypto.randomBytes(32).toString('hex'),
+          samlId: profile.nameID,
+          roleId: defaultRole?.id ?? undefined,
+          emailVerifiedAt: new Date(),
+        },
+      });
+    }
+    if (user.status !== 'ACTIVE') {
+      throw new ForbiddenException('Account is not active');
+    }
+    const tokens = await this.generateTokens(user.id, user.email);
+    return { user, ...tokens };
+  }
+
+  signSamlToken(userId: string): string {
+    return this.jwt.sign({ sub: userId, type: 'saml_exchange' }, { expiresIn: '1m' });
+  }
+
+  async exchangeSamlToken(samlToken: string) {
+    let payload: { sub: string; type: string };
+    try {
+      payload = this.jwt.verify(samlToken);
+    } catch {
+      throw new UnauthorizedException('Invalid or expired SAML token');
+    }
+    if (payload.type !== 'saml_exchange') {
+      throw new UnauthorizedException('Invalid token type');
+    }
+    const user = await this.userWithRole(payload.sub);
+    if (!user || user.status !== 'ACTIVE') {
+      throw new ForbiddenException('Account is not active');
+    }
+    const tokens = await this.generateTokens(user.id, user.email);
+    return { user, ...tokens };
   }
 
   async exportUserData(userId: string) {
