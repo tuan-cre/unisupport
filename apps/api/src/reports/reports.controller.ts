@@ -66,4 +66,23 @@ export class ReportsController {
     res.setHeader('Content-Disposition', `attachment; filename="${type}-report.csv"`);
     res.send(csv);
   }
+
+  @Get('export/pdf')
+  @RequirePermissions('user:manage')
+  @ApiOperation({ summary: 'Export report as PDF' })
+  async exportPdf(
+    @Res() res: Response,
+    @Query('type') type?: string,
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string,
+  ) {
+    if (!type) return res.status(400).json({ success: false, message: 'Report type is required' });
+    const pdf = await this.reports.generatePdf(type, startDate, endDate);
+    if (!pdf || pdf.length === 0) {
+      return res.status(400).json({ success: false, message: 'Invalid report type' });
+    }
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="${type}-report.pdf"`);
+    res.send(pdf);
+  }
 }

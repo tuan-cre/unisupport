@@ -78,11 +78,12 @@ export class TicketsController {
     return { success: true, message: 'Comment added', data: comment };
   }
 
-  @ApiOperation({ summary: 'Bulk update tickets' })
+  @ApiOperation({ summary: 'Bulk update tickets (admin/agent only)' })
   @Post('tickets/bulk')
   @HttpCode(HttpStatus.OK)
-  async bulkUpdate(@Body() dto: BulkUpdateDto) {
-    const result = await this.tickets.bulkUpdate(dto);
+  async bulkUpdate(@Body() dto: BulkUpdateDto, @Req() req: Request) {
+    const roleName = req.user!.roleName ?? null;
+    const result = await this.tickets.bulkUpdate(dto, req.user!.id, roleName);
     return { success: true, message: 'Bulk update applied', ...result };
   }
 
@@ -102,7 +103,16 @@ export class TicketsController {
 
   @ApiOperation({ summary: 'Add a watcher to a ticket' })
   @Post('tickets/:id/watchers')
-  async addWatcher(@Param('id') id: string, @Body('userId') userId: string) {
+  async addWatcher(
+    @Param('id') id: string,
+    @Body('userId') userId: string,
+    @Req() req: Request,
+  ) {
+    const roleName = req.user!.roleName ?? null;
+    const isAdminOrAgent = roleName === 'admin' || roleName === 'agent';
+    if (!isAdminOrAgent && req.user!.id !== userId) {
+      return { success: false, message: 'Only agents can add other users as watchers' };
+    }
     await this.tickets.addWatcher(id, userId);
     return { success: true, message: 'Watcher added' };
   }
@@ -154,8 +164,11 @@ export class TicketsController {
 
   @ApiOperation({ summary: 'Remove attachment from ticket' })
   @Delete('tickets/:id/attachments/:attachmentId')
-  async removeTicketAttachment(@Param('attachmentId') attachmentId: string) {
-    await this.files.remove(attachmentId);
+  async removeTicketAttachment(
+    @Param('attachmentId') attachmentId: string,
+    @Req() req: Request,
+  ) {
+    await this.files.remove(attachmentId, req.user!.id);
     return { success: true, message: 'File removed' };
   }
 
@@ -194,5 +207,18 @@ export class TicketsController {
   async deleteTemplate(@Param('id') id: string) {
     await this.tickets.deleteTemplate(id);
     return { success: true, message: 'Template deleted' };
+  }
+
+  @ApiOperation({ summary: 'Rate a ticket (CSAT survey)' })
+  @HttpCode(HttpStatus.OK)
+  @Post('tickets/:id/rate')
+  async rateTicket(
+    @Param('id') id: string,
+    @Req() req: Request,
+    @Body('rating') rating: number,
+    @Body('feedback') feedback?: string,
+  ) {
+    const data = await this.tickets.rateTicket(id, req.user!.id, rating, feedback);
+    return { success: true, message: 'Rating submitted', data };
   }
 }

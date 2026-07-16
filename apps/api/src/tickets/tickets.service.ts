@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { SlasService } from '../slas/slas.service';
@@ -28,6 +28,14 @@ export class TicketsService {
       select: { id: true, originalName: true, mimeType: true, size: true, createdAt: true },
     },
   } as const;
+
+  private static readonly VALID_TRANSITIONS: Record<string, string[]> = {
+    OPEN: ['IN_PROGRESS', 'PENDING', 'RESOLVED'],
+    IN_PROGRESS: ['PENDING', 'RESOLVED', 'OPEN'],
+    PENDING: ['IN_PROGRESS', 'RESOLVED', 'OPEN'],
+    RESOLVED: ['CLOSED', 'OPEN'],
+    CLOSED: ['OPEN'],
+  };
 
   private async logHistory(
     ticketId: string,
@@ -162,11 +170,24 @@ export class TicketsService {
       },
     });
     if (!ticket) throw new NotFoundException('Ticket not found');
-    if (userRole !== 'admin' && userRole !== 'agent' && ticket.requesterId !== userId) {
+    const isAdminOrAgent = userRole === 'admin' || userRole === 'agent';
+    if (!isAdminOrAgent && ticket.requesterId !== userId) {
       throw new ForbiddenException('Access denied');
     }
+
+    const comments = userRole !== 'admin' && userRole !== 'agent'
+      ? ticket.comments.filter((c) => !c.isInternal)
+      : ticket.comments;
+
+    const myRating = await this.prisma.ticketRating.findUnique({
+      where: { ticketId_userId: { ticketId: id, userId } },
+      select: { rating: true, feedback: true, createdAt: true },
+    });
+
     return {
       ...ticket,
+      comments,
+      myRating,
       slaStatus: this.slas.computeSlaStatus(ticket, ticket.sla),
     };
   }
@@ -190,6 +211,15 @@ export class TicketsService {
 
     if (!isAdminOrAgent && dto.assigneeId) {
       throw new ForbiddenException('Only agents can assign tickets');
+    }
+
+    if (dto.status && dto.status !== ticket.status) {
+      const allowed = TicketsService.VALID_TRANSITIONS[ticket.status];
+      if (!allowed?.includes(dto.status)) {
+        throw new BadRequestException(
+          `Cannot transition from ${ticket.status} to ${dto.status}. Allowed: ${allowed?.join(', ') ?? 'none'}`,
+        );
+      }
     }
 
     const updateData: any = { ...dto };
@@ -403,7 +433,10 @@ export class TicketsService {
   }
 
   // Bulk operations
-  async bulkUpdate(dto: BulkUpdateDto) {
+  async bulkUpdate(dto: BulkUpdateDto, userId: string, userRole: string | null) {
+    const isAdminOrAgent = userRole === 'admin' || userRole === 'agent';
+    if (!isAdminOrAgent) throw new ForbiddenException('Only admins and agents can bulk update tickets');
+
     const data: any = {};
     if (dto.status) data.status = dto.status;
     if (dto.priority) data.priority = dto.priority;
@@ -411,6 +444,11 @@ export class TicketsService {
     if (dto.departmentId !== undefined) data.departmentId = dto.departmentId;
 
     if (Object.keys(data).length === 0) return { count: 0 };
+
+    if (dto.status) {
+      if (dto.status === 'RESOLVED') data.resolvedAt = new Date();
+      if (dto.status === 'CLOSED') data.closedAt = new Date();
+    }
 
     const result = await this.prisma.ticket.updateMany({
       where: { id: { in: dto.ids } },
@@ -454,6 +492,22 @@ export class TicketsService {
     await this.prisma.attachment.update({
       where: { id: attachmentId },
       data: { ticketId },
+    });
+  }
+
+  async rateTicket(ticketId: string, userId: string, rating: number, feedback?: string) {
+    const ticket = await this.prisma.ticket.findUnique({ where: { id: ticketId } });
+    if (!ticket) throw new NotFoundException('Ticket not found');
+    if (ticket.requesterId !== userId) {
+      throw new ForbiddenException('Only the ticket requester can rate');
+    }
+    if (rating < 1 || rating > 5) {
+      throw new BadRequestException('Rating must be between 1 and 5');
+    }
+    return this.prisma.ticketRating.upsert({
+      where: { ticketId_userId: { ticketId, userId } },
+      update: { rating, feedback },
+      create: { ticketId, userId, rating, feedback },
     });
   }
 }
