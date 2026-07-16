@@ -21,6 +21,33 @@ enum TicketStatus {
   CLOSED
 }
 
+enum ProblemStatus {
+  IDENTIFIED
+  ANALYZING
+  ROOT_CAUSE_FOUND
+  KNOWN_ERROR
+  RESOLVED
+}
+
+enum ChangeStatus {
+  DRAFT
+  PENDING_APPROVAL
+  APPROVED
+  IN_PROGRESS
+  IMPLEMENTED
+  REVIEWED
+  CLOSED
+  ROLLED_BACK
+  REJECTED
+}
+
+enum ApprovalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  CANCELLED
+}
+
 enum TicketPriority {
   LOW
   MEDIUM
@@ -34,16 +61,41 @@ model User {
   passwordHash String
   firstName    String
   lastName     String
+  avatarUrl    String?
   status       UserStatus @default(ACTIVE)
+
+  emailVerifiedAt     DateTime?
+  emailVerificationToken String?   @unique
+  loginAttempts       Int          @default(0)
+  lockedUntil         DateTime?
+  totpSecret          String?
+  totpEnabled         Boolean      @default(false)
+
   roleId       String?
   role         Role?      @relation(fields: [roleId], references: [id])
   departmentId String?
   department   Department? @relation(fields: [departmentId], references: [id])
 
-  sessions  Session[]
-  tickets   Ticket[]  @relation("TicketRequester")
-  assigned  Ticket[]  @relation("TicketAssignee")
-  comments  Comment[]
+  sessions      Session[]
+  tickets       Ticket[]        @relation("TicketRequester")
+  assigned      Ticket[]        @relation("TicketAssignee")
+  comments      Comment[]
+  resetTokens   PasswordResetToken[]
+  notifications Notification[]
+  watchers      TicketWatcher[]
+  history       TicketHistory[]
+  timeEntries   TimeEntry[]
+  uploads       Attachment[]
+  articles      Article[]
+  problemsAssigned   Problem[] @relation("ProblemAssignee")
+  problemsCreated    Problem[] @relation("ProblemCreator")
+  knownErrorsCreated KnownError[] @relation("KnownErrorCreator")
+  changesRequested   ChangeRequest[] @relation("ChangeRequester")
+  changesAssigned    ChangeRequest[] @relation("ChangeAssignee")
+  approvalDecisions  Approval[] @relation("ApprovalApprover")
+  assetAssignments   AssetAssignment[]
+  hardwareCheckouts  HardwareCheckout[]
+  chatConversations  ChatConversation[]
 
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
@@ -80,6 +132,7 @@ model Department {
   name  String @unique
   users  User[]
   tickets Ticket[]
+  templates TicketTemplate[]
 
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
@@ -100,6 +153,7 @@ model Session {
   createdAt        DateTime  @default(now())
 
   @@index([userId])
+  @@index([expiresAt])
   @@map("sessions")
 }
 
@@ -109,6 +163,7 @@ model Ticket {
   description String
   status      TicketStatus   @default(OPEN)
   priority    TicketPriority @default(MEDIUM)
+  type        String?
 
   requesterId String
   requester   User   @relation("TicketRequester", fields: [requesterId], references: [id])
@@ -118,7 +173,23 @@ model Ticket {
   departmentId String?
   department   Department? @relation(fields: [departmentId], references: [id])
 
-  comments   Comment[]
+  tags        TicketTag[]
+  comments    Comment[]
+  attachments Attachment[]
+  history     TicketHistory[]
+  watchers    TicketWatcher[]
+  relatedFrom TicketRelation[] @relation("RelatedTicketFrom")
+  relatedTo   TicketRelation[] @relation("RelatedTicketTo")
+  timeEntries TimeEntry[]
+  problems    ProblemTicket[]
+  chatConversations ChatConversation[]
+
+  slaId        String?
+  sla          Sla?      @relation(fields: [slaId], references: [id])
+  firstResponseAt DateTime?
+  resolvedAt     DateTime?
+  closedAt       DateTime?
+
   createdAt  DateTime  @default(now())
   updatedAt  DateTime  @updatedAt
   deletedAt  DateTime?
@@ -130,18 +201,468 @@ model Ticket {
   @@map("tickets")
 }
 
+model Tag {
+  id        String      @id @default(cuid())
+  name      String      @unique
+  color     String?
+  tickets   TicketTag[]
+  createdAt DateTime    @default(now())
+
+  @@map("tags")
+}
+
+model TicketTag {
+  ticketId String
+  ticket   Ticket  @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  tagId    String
+  tag      Tag     @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([ticketId, tagId])
+  @@map("ticket_tags")
+}
+
+model TicketTemplate {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  subject     String
+  description String
+  priority    TicketPriority @default(MEDIUM)
+  departmentId String?
+  department   Department? @relation(fields: [departmentId], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("ticket_templates")
+}
+
 model Comment {
-  id        String   @id @default(cuid())
-  content   String
-  ticketId  String
-  ticket    Ticket   @relation(fields: [ticketId], references: [id], onDelete: Cascade)
-  authorId  String
-  author    User     @relation(fields: [authorId], references: [id])
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  deletedAt DateTime?
+  id         String   @id @default(cuid())
+  content    String
+  isInternal Boolean  @default(false)
+  ticketId   String
+  ticket     Ticket   @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  authorId   String
+  author     User     @relation(fields: [authorId], references: [id])
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  deletedAt  DateTime?
+  attachments Attachment[]
 
   @@index([ticketId])
   @@index([authorId])
   @@map("comments")
+}
+
+model TicketHistory {
+  id        String   @id @default(cuid())
+  ticketId  String
+  ticket    Ticket   @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  field     String
+  oldValue  String?
+  newValue  String?
+  createdAt DateTime @default(now())
+
+  @@index([ticketId])
+  @@map("ticket_history")
+}
+
+model TicketWatcher {
+  ticketId String
+  ticket   Ticket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  userId   String
+  user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([ticketId, userId])
+  @@map("ticket_watchers")
+}
+
+model TicketRelation {
+  id         String @id @default(cuid())
+  fromTicketId String
+  fromTicket   Ticket @relation("RelatedTicketFrom", fields: [fromTicketId], references: [id], onDelete: Cascade)
+  toTicketId   String
+  toTicket     Ticket @relation("RelatedTicketTo", fields: [toTicketId], references: [id], onDelete: Cascade)
+  type       String @default("related")
+
+  @@unique([fromTicketId, toTicketId, type])
+  @@map("ticket_relations")
+}
+
+model ArticleCategory {
+  id        String    @id @default(cuid())
+  name      String    @unique
+  slug      String    @unique
+  description String?
+  articles  Article[]
+  createdAt DateTime  @default(now())
+
+  @@map("article_categories")
+}
+
+model Article {
+  id          String   @id @default(cuid())
+  title       String
+  slug        String   @unique
+  content     String
+  categoryId  String?
+  category    ArticleCategory? @relation(fields: [categoryId], references: [id])
+  helpful     Int      @default(0)
+  notHelpful  Int      @default(0)
+  viewCount   Int      @default(0)
+  published   Boolean  @default(true)
+  createdById String
+  createdBy   User     @relation(fields: [createdById], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([categoryId])
+  @@index([slug])
+  @@map("articles")
+}
+
+model Attachment {
+  id           String   @id @default(cuid())
+  ticketId     String?
+  ticket       Ticket?  @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  commentId    String?
+  comment      Comment? @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  originalName String
+  objectName   String   @unique
+  mimeType     String
+  size         Int
+  uploadedById String
+  uploadedBy   User     @relation(fields: [uploadedById], references: [id])
+  createdAt    DateTime @default(now())
+
+  @@index([ticketId])
+  @@index([commentId])
+  @@map("attachments")
+}
+
+model TimeEntry {
+  id        String   @id @default(cuid())
+  ticketId  String
+  ticket    Ticket   @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  minutes   Int
+  description String?
+  createdAt DateTime @default(now())
+
+  @@index([ticketId])
+  @@map("time_entries")
+}
+
+model Notification {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      String
+  title     String
+  message   String
+  link      String?
+  readAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId, readAt])
+  @@map("notifications")
+}
+
+model PasswordResetToken {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token     String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId])
+  @@index([token])
+  @@map("password_reset_tokens")
+}
+
+model Sla {
+  id             String   @id @default(cuid())
+  name           String   @unique
+  description    String?
+  priority       TicketPriority
+  responseTime   Int       // in minutes
+  resolutionTime Int       // in minutes
+  calendarId     String?
+  calendar       SlaCalendar? @relation(fields: [calendarId], references: [id])
+  isDefault      Boolean   @default(false)
+  tickets        Ticket[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("slas")
+}
+
+model SlaCalendar {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  timezone  String   @default("UTC")
+  hoursJson String   // JSON: { "monday": [{"start":"09:00","end":"17:00"}], ... }
+  slas      Sla[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("sla_calendars")
+}
+
+model Problem {
+  id          String        @id @default(cuid())
+  subject     String
+  description String
+  status      ProblemStatus @default(IDENTIFIED)
+  priority    TicketPriority @default(MEDIUM)
+  rootCause   String?
+  workaround  String?
+  resolvedAt  DateTime?
+  category    String?
+
+  assignedToId String?
+  assignedTo   User?     @relation("ProblemAssignee", fields: [assignedToId], references: [id])
+  createdById  String
+  createdBy    User      @relation("ProblemCreator", fields: [createdById], references: [id])
+
+  tickets     ProblemTicket[]
+  knownErrors KnownError[]
+  changes     ChangeRequest[]
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@index([assignedToId])
+  @@index([createdById])
+  @@index([status])
+  @@map("problems")
+}
+
+model ProblemTicket {
+  problemId String
+  problem   Problem @relation(fields: [problemId], references: [id], onDelete: Cascade)
+  ticketId  String
+  ticket    Ticket  @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+
+  @@id([problemId, ticketId])
+  @@map("problem_tickets")
+}
+
+model KnownError {
+  id          String   @id @default(cuid())
+  subject     String
+  description String
+  workaround  String?
+  solution    String?
+
+  problemId   String?
+  problem     Problem? @relation(fields: [problemId], references: [id])
+
+  category    String?
+  severity    String?
+
+  createdById String
+  createdBy   User     @relation("KnownErrorCreator", fields: [createdById], references: [id])
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@index([problemId])
+  @@index([createdById])
+  @@map("known_errors")
+}
+
+model ChangeRequest {
+  id          String       @id @default(cuid())
+  subject     String
+  description String
+  status      ChangeStatus @default(DRAFT)
+  priority    TicketPriority @default(MEDIUM)
+  riskLevel   String?
+
+  problemId   String?
+  problem     Problem? @relation(fields: [problemId], references: [id])
+
+  requesterId String
+  requester   User     @relation("ChangeRequester", fields: [requesterId], references: [id])
+  assigneeId  String?
+  assignee    User?    @relation("ChangeAssignee", fields: [assigneeId], references: [id])
+
+  plannedStart DateTime?
+  plannedEnd   DateTime?
+  actualStart  DateTime?
+  actualEnd    DateTime?
+
+  approvals   Approval[]
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@index([requesterId])
+  @@index([assigneeId])
+  @@index([status])
+  @@map("change_requests")
+}
+
+model Approval {
+  id              String         @id @default(cuid())
+  changeRequestId String
+  changeRequest   ChangeRequest  @relation(fields: [changeRequestId], references: [id], onDelete: Cascade)
+
+  approverId  String?
+  approver    User?          @relation("ApprovalApprover", fields: [approverId], references: [id])
+  role        String?
+  status      ApprovalStatus @default(PENDING)
+  comment     String?
+  stepOrder   Int            @default(0)
+  chainName   String?
+
+  decidedAt   DateTime?
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  @@index([changeRequestId])
+  @@index([approverId])
+  @@map("approvals")
+}
+
+enum AssetType {
+  HARDWARE
+  SOFTWARE
+  NETWORK
+  PERIPHERAL
+  OTHER
+}
+
+enum AssetStatus {
+  AVAILABLE
+  ASSIGNED
+  MAINTENANCE
+  RETIRED
+  LOST
+}
+
+model Asset {
+  id            String    @id @default(cuid())
+  name          String
+  type          AssetType
+  status        AssetStatus @default(AVAILABLE)
+  serialNumber  String?
+  model         String?
+  manufacturer  String?
+  purchaseDate  DateTime?
+  warrantyExpiry DateTime?
+  notes         String?
+  location      String?
+
+  assignments   AssetAssignment[]
+  checkouts     HardwareCheckout[]
+  licenses      SoftwareLicense[]
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@index([status])
+  @@index([type])
+  @@map("assets")
+}
+
+model AssetAssignment {
+  id         String    @id @default(cuid())
+  assetId    String
+  asset      Asset     @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  userId     String
+  user       User      @relation(fields: [userId], references: [id])
+  assignedAt DateTime  @default(now())
+  returnedAt DateTime?
+
+  @@index([assetId])
+  @@index([userId])
+  @@map("asset_assignments")
+}
+
+model SoftwareLicense {
+  id             String    @id @default(cuid())
+  name           String
+  key            String?
+  seats          Int       @default(1)
+  usedSeats      Int       @default(0)
+  expirationDate DateTime?
+  vendor         String?
+  notes          String?
+
+  assetId        String?
+  asset          Asset?    @relation(fields: [assetId], references: [id])
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@index([assetId])
+  @@map("software_licenses")
+}
+
+model HardwareCheckout {
+  id               String    @id @default(cuid())
+  assetId          String
+  asset            Asset     @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  userId           String
+  user             User      @relation(fields: [userId], references: [id])
+  checkoutAt       DateTime  @default(now())
+  expectedReturnAt DateTime?
+  returnedAt       DateTime?
+  notes            String?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@index([assetId])
+  @@index([userId])
+  @@map("hardware_checkouts")
+}
+
+model ChatConversation {
+  id        String   @id @default(cuid())
+  subject   String   @default("Chat")
+  status    String   @default("ACTIVE")
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id])
+  visitorName  String?
+  visitorEmail String?
+  messages  ChatMessage[]
+
+  ticketId  String?
+  ticket    Ticket?  @relation(fields: [ticketId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status])
+  @@index([userId])
+  @@index([ticketId])
+  @@map("chat_conversations")
+}
+
+model ChatMessage {
+  id             String   @id @default(cuid())
+  conversationId String
+  conversation   ChatConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  content        String
+  senderType     String   @default("VISITOR") // VISITOR, AGENT, SYSTEM
+  senderId       String?
+  senderName     String?
+  createdAt      DateTime @default(now())
+
+  @@index([conversationId])
+  @@map("chat_messages")
 }

@@ -29,6 +29,11 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.39.5",
+    "@types/bcrypt": "^6.0.0",
+    "@types/cookie-parser": "^1.4.10",
+    "@types/express": "^5.0.6",
+    "@types/passport-jwt": "^4.0.1",
+    "bcrypt": "^6.0.0",
     "concurrently": "^9.1.2",
     "eslint": "^9.39.5",
     "eslint-config-prettier": "^10.1.8",
@@ -36,6 +41,7 @@
     "husky": "^9.1.7",
     "lint-staged": "^15.5.2",
     "prettier": "^3.9.5",
+    "tsx": "^4.23.1",
     "typescript-eslint": "^8.64.0"
   },
   "repository": {
@@ -50,5 +56,19 @@
   ],
   "author": "tuan-cre",
   "license": "MIT",
-  "type": "commonjs"
+  "type": "commonjs",
+  "allowScripts": {
+    "prisma@6.19.3": true,
+    "@prisma/client@6.19.3": true,
+    "@prisma/engines@6.19.3": true,
+    "bcrypt@6.0.0": true
+  },
+  "dependencies": {
+    "@nestjs/jwt": "^11.0.2",
+    "@nestjs/passport": "^11.0.5",
+    "@nestjs/throttler": "^6.5.0",
+    "cookie-parser": "^1.4.7",
+    "passport": "^0.7.0",
+    "passport-jwt": "^4.0.1"
+  }
 }
