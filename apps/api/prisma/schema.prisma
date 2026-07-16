@@ -64,6 +64,7 @@ model User {
   avatarUrl    String?
   status       UserStatus @default(ACTIVE)
 
+  samlId              String?    @unique
   emailVerifiedAt     DateTime?
   emailVerificationToken String?   @unique
   loginAttempts       Int          @default(0)
@@ -96,6 +97,7 @@ model User {
   assetAssignments   AssetAssignment[]
   hardwareCheckouts  HardwareCheckout[]
   chatConversations  ChatConversation[]
+  ratings            TicketRating[]
 
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
@@ -183,6 +185,7 @@ model Ticket {
   timeEntries TimeEntry[]
   problems    ProblemTicket[]
   chatConversations ChatConversation[]
+  ratings     TicketRating[]
 
   slaId        String?
   sla          Sla?      @relation(fields: [slaId], references: [id])
@@ -665,4 +668,19 @@ model ChatMessage {
 
   @@index([conversationId])
   @@map("chat_messages")
+}
+
+model TicketRating {
+  id        String   @id @default(cuid())
+  ticketId  String
+  ticket    Ticket   @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  rating    Int      // 1-5
+  feedback  String?
+  createdAt DateTime @default(now())
+
+  @@unique([ticketId, userId])
+  @@index([ticketId])
+  @@map("ticket_ratings")
 }
