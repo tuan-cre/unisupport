@@ -5,17 +5,7 @@ on:
     branches: [main]
 
 jobs:
-  deploy:
+  noop:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-
-      - name: Deploy via SSH
-        uses: appleboy/ssh-action@v1
-        with:
-          host: lhtuan.site
-          username: lhtuan
-          key: ${{ secrets.DEPLOY_SSH_KEY }}
-          script: |
-            cd ~/unisupport
-            ./deploy.sh
+      - run: echo "Deploy handled by server-side cron polling (deploy-poll.sh)"
