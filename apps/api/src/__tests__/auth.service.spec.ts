@@ -49,6 +49,15 @@ const mockConfig = {
     const map: Record<string, any> = {
       JWT_SECRET: 'test-secret',
       JWT_REFRESH_SECRET: 'test-refresh-secret',
+      WEB_ORIGIN: 'http://localhost:5173',
+    };
+    return map[key];
+  }),
+  getOrThrow: jest.fn((key: string) => {
+    const map: Record<string, any> = {
+      JWT_SECRET: 'test-secret',
+      JWT_REFRESH_SECRET: 'test-refresh-secret',
+      WEB_ORIGIN: 'http://localhost:5173',
     };
     return map[key];
   }),
