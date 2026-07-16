@@ -10,14 +10,18 @@ export default function MfaPage() {
   const navigate = useNavigate();
   const [code, setCode] = useState('');
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setLoading(true);
     try {
       await verifyMfa(code);
       navigate('/');
     } catch (err: any) {
       setError(err.response?.data?.message || 'Invalid code');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -44,8 +48,8 @@ export default function MfaPage() {
           required
         />
 
-        <Button type="submit" className="w-full" disabled={code.length < 6}>
-          Verify
+        <Button type="submit" className="w-full" disabled={code.length < 6 || loading}>
+          {loading ? 'Verifying...' : 'Verify'}
         </Button>
       </form>
     </div>

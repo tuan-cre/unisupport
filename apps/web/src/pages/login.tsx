@@ -12,6 +12,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [generalError, setGeneralError] = useState('');
+  const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -24,6 +25,7 @@ export default function LoginPage() {
       setErrors(fieldErrors);
       return;
     }
+    setLoading(true);
     try {
       await login(email, password);
       navigate('/tickets');
@@ -33,6 +35,8 @@ export default function LoginPage() {
       } else {
         setGeneralError(err.response?.data?.message || 'Login failed');
       }
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -52,8 +56,9 @@ export default function LoginPage() {
             )}
 
             <div>
-              <label className="mb-1 block text-sm font-medium text-slate-700">Email</label>
+              <label htmlFor="login-email" className="mb-1 block text-sm font-medium text-slate-700">Email</label>
               <Input
+                id="login-email"
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -63,8 +68,9 @@ export default function LoginPage() {
             </div>
 
             <div>
-              <label className="mb-1 block text-sm font-medium text-slate-700">Password</label>
+              <label htmlFor="login-password" className="mb-1 block text-sm font-medium text-slate-700">Password</label>
               <Input
+                id="login-password"
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
@@ -79,8 +85,8 @@ export default function LoginPage() {
               </Link>
             </div>
 
-            <Button type="submit" className="w-full">
-              Sign in
+            <Button type="submit" className="w-full" disabled={loading}>
+              {loading ? 'Signing in...' : 'Sign in'}
             </Button>
 
             <p className="text-center text-sm text-slate-500">
@@ -90,6 +96,22 @@ export default function LoginPage() {
               </Link>
             </p>
           </form>
+
+          <div className="relative my-4">
+            <div className="absolute inset-0 flex items-center">
+              <span className="w-full border-t border-slate-200" />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-white px-2 text-slate-400">or</span>
+            </div>
+          </div>
+
+          <a
+            href="/api/auth/saml/login"
+            className="flex w-full items-center justify-center gap-2 rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+          >
+            Sign in with University SSO
+          </a>
         </CardContent>
       </Card>
     </main>

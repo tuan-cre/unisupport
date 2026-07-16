@@ -11,8 +11,6 @@ import {
   DropdownMenuSeparator,
 } from './ui/dropdown-menu';
 import { User, LogOut, KeyRound, Plus, Bell, Shield, BookOpen, Sun, Moon } from 'lucide-react';
-import { useTheme } from '../hooks/use-theme';
-import ConfirmDialog from './confirm-dialog';
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -21,11 +19,21 @@ interface AppLayoutProps {
 export default function AppLayout({ children }: AppLayoutProps) {
   const { user, logout } = useAuth();
   const { notifications, unread, markRead, markAllRead } = useNotifications();
-  const { theme, toggle: toggleTheme } = useTheme();
   const navigate = useNavigate();
   const [notifOpen, setNotifOpen] = useState(false);
   const notifRef = useRef<HTMLDivElement>(null);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const [theme, setTheme] = useState<'light' | 'dark'>(() => {
+    if (typeof window === 'undefined') return 'light';
+    const stored = localStorage.getItem('unisupport-theme') as 'light' | 'dark' | null;
+    if (stored) return stored;
+    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  });
+
+  useEffect(() => {
+    document.documentElement.classList.toggle('dark', theme === 'dark');
+    localStorage.setItem('unisupport-theme', theme);
+  }, [theme]);
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -43,20 +51,20 @@ export default function AppLayout({ children }: AppLayoutProps) {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <header className="sticky top-0 z-40 border-b bg-white">
+    <div className="min-h-screen bg-background">
+      <header className="sticky top-0 z-40 border-b bg-background">
         <div className="mx-auto flex h-14 max-w-5xl items-center justify-between px-6">
           <button
             onClick={() => navigate('/tickets')}
-            className="text-lg font-bold text-slate-900 hover:text-blue-600 transition-colors"
+            className="text-lg font-bold text-foreground hover:text-blue-600 transition-colors"
           >
             UniSupport
           </button>
 
           <div className="flex items-center gap-3">
             <button
-              onClick={toggleTheme}
-              className="rounded-lg p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-700 transition-colors"
+              onClick={() => setTheme((p) => (p === 'light' ? 'dark' : 'light'))}
+              className="rounded-lg p-2 text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
               aria-label="Toggle dark mode"
             >
               {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
@@ -74,7 +82,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
             <div className="relative" ref={notifRef}>
               <button
                 onClick={() => setNotifOpen(!notifOpen)}
-                className="relative rounded-lg p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-700 transition-colors"
+                className="relative rounded-lg p-2 text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
               >
                 <Bell className="h-5 w-5" />
                 {unread > 0 && (
@@ -85,9 +93,9 @@ export default function AppLayout({ children }: AppLayoutProps) {
               </button>
 
               {notifOpen && (
-                <div className="absolute right-0 z-50 mt-2 w-80 rounded-xl border bg-white shadow-lg">
+                <div className="absolute right-0 z-50 mt-2 w-80 rounded-xl border bg-background shadow-lg">
                   <div className="flex items-center justify-between border-b px-4 py-3">
-                    <span className="text-sm font-semibold text-slate-900">Notifications</span>
+                    <span className="text-sm font-semibold text-foreground">Notifications</span>
                     {unread > 0 && (
                       <button
                         onClick={markAllRead}
@@ -99,7 +107,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
                   </div>
                   <div className="max-h-80 overflow-y-auto">
                     {notifications.length === 0 ? (
-                      <p className="px-4 py-8 text-center text-sm text-slate-400">
+                      <p className="px-4 py-8 text-center text-sm text-muted-foreground">
                         No notifications yet
                       </p>
                     ) : (
@@ -111,12 +119,12 @@ export default function AppLayout({ children }: AppLayoutProps) {
                             if (n.link) navigate(n.link);
                             setNotifOpen(false);
                           }}
-                          className={`w-full px-4 py-3 text-left transition-colors hover:bg-slate-50 ${
-                            !n.readAt ? 'bg-blue-50/50' : ''
+                          className={`w-full px-4 py-3 text-left transition-colors hover:bg-accent ${
+                            !n.readAt ? 'bg-blue-50/50 dark:bg-blue-900/20' : ''
                           }`}
                         >
-                          <p className="text-sm font-medium text-slate-900">{n.title}</p>
-                          <p className="mt-0.5 text-xs text-slate-500 line-clamp-2">{n.message}</p>
+                          <p className="text-sm font-medium text-foreground">{n.title}</p>
+                          <p className="mt-0.5 text-xs text-muted-foreground line-clamp-2">{n.message}</p>
                         </button>
                       ))
                     )}
@@ -134,7 +142,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
                   </span>
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48">
+              <DropdownMenuContent align="end" className="w-48 bg-background">
                 <div className="px-2 py-1.5 text-xs text-muted-foreground">{user?.email}</div>
                 <DropdownMenuSeparator />
                 {user?.role?.permissions?.some((p) => p.name === 'user:manage') && (

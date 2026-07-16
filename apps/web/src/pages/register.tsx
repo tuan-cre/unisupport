@@ -14,6 +14,7 @@ export default function RegisterPage() {
   const [password, setPassword] = useState('');
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [generalError, setGeneralError] = useState('');
+  const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -28,6 +29,7 @@ export default function RegisterPage() {
       setErrors(fieldErrors);
       return;
     }
+    setLoading(true);
     try {
       await register(email, password, firstName, lastName);
       navigate('/tickets');
@@ -38,6 +40,8 @@ export default function RegisterPage() {
       } else {
         setGeneralError(msg);
       }
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -57,8 +61,9 @@ export default function RegisterPage() {
             )}
 
             <div>
-              <label className="mb-1 block text-sm font-medium text-slate-700">First name</label>
+              <label htmlFor="register-firstname" className="mb-1 block text-sm font-medium text-slate-700">First name</label>
               <Input
+                id="register-firstname"
                 value={firstName}
                 onChange={(e) => setFirstName(e.target.value)}
                 className={errors.firstName ? 'border-red-400' : ''}
@@ -67,8 +72,9 @@ export default function RegisterPage() {
             </div>
 
             <div>
-              <label className="mb-1 block text-sm font-medium text-slate-700">Last name</label>
+              <label htmlFor="register-lastname" className="mb-1 block text-sm font-medium text-slate-700">Last name</label>
               <Input
+                id="register-lastname"
                 value={lastName}
                 onChange={(e) => setLastName(e.target.value)}
                 className={errors.lastName ? 'border-red-400' : ''}
@@ -77,8 +83,9 @@ export default function RegisterPage() {
             </div>
 
             <div>
-              <label className="mb-1 block text-sm font-medium text-slate-700">Email</label>
+              <label htmlFor="register-email" className="mb-1 block text-sm font-medium text-slate-700">Email</label>
               <Input
+                id="register-email"
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -88,8 +95,9 @@ export default function RegisterPage() {
             </div>
 
             <div>
-              <label className="mb-1 block text-sm font-medium text-slate-700">Password</label>
+              <label htmlFor="register-password" className="mb-1 block text-sm font-medium text-slate-700">Password</label>
               <Input
+                id="register-password"
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
@@ -98,8 +106,8 @@ export default function RegisterPage() {
               {errors.password && <p className="mt-1 text-xs text-red-500">{errors.password}</p>}
             </div>
 
-            <Button type="submit" className="w-full">
-              Register
+            <Button type="submit" className="w-full" disabled={loading}>
+              {loading ? 'Registering...' : 'Register'}
             </Button>
 
             <p className="text-center text-sm text-slate-500">

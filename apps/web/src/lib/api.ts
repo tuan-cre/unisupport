@@ -47,7 +47,7 @@ api.interceptors.response.use(
           original.headers.Authorization = `Bearer ${accessToken}`;
           return api(original);
         } catch {
-          refreshQueue.forEach((q) => q.reject(err));
+          refreshQueue.forEach((q) => q.reject(new Error('Session expired')));
           refreshQueue = [];
           localStorage.removeItem('accessToken');
           localStorage.removeItem('refreshToken');

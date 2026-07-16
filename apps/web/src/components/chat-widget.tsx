@@ -23,6 +23,7 @@ export default function ChatWidget() {
   const [sending, setSending] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   const baseUrl = import.meta.env.VITE_API_URL || '';
 
@@ -32,15 +33,18 @@ export default function ChatWidget() {
 
   const fetchMessages = useCallback(async () => {
     if (!convId || !email) return;
+    abortControllerRef.current?.abort();
+    abortControllerRef.current = new AbortController();
     try {
       const res = await fetch(
         `${baseUrl}/api/chat/conversations/${convId}/messages?email=${encodeURIComponent(email)}`,
+        { signal: abortControllerRef.current.signal },
       );
       if (!res.ok) return;
       const json = await res.json();
       setMessages(json.data.messages || []);
-    } catch {
-      // ignore
+    } catch (err) {
+      if (err instanceof DOMException && err.name === 'AbortError') return;
     }
   }, [convId, email, baseUrl]);
 
@@ -50,6 +54,7 @@ export default function ChatWidget() {
     pollRef.current = setInterval(fetchMessages, 5000);
     return () => {
       if (pollRef.current) clearInterval(pollRef.current);
+      abortControllerRef.current?.abort();
     };
   }, [started, fetchMessages]);
 
@@ -114,6 +119,7 @@ export default function ChatWidget() {
           onClick={() => {
             setOpen(false);
             setError('');
+            abortControllerRef.current?.abort();
           }}
         >
           <X className="h-4 w-4" />

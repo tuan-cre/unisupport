@@ -10,16 +10,20 @@ export default function ForgotPasswordPage() {
   const [sent, setSent] = useState(false);
   const [resetLink, setResetLink] = useState('');
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setLoading(true);
     try {
       const res = await api.post('/auth/forgot-password', { email });
       setSent(true);
       setResetLink(res.data.resetLink || '');
     } catch (err: any) {
       setError(err.response?.data?.message || 'Something went wrong');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -64,8 +68,8 @@ export default function ForgotPasswordPage() {
                 />
               </div>
 
-              <Button type="submit" className="w-full">
-                Send reset link
+              <Button type="submit" className="w-full" disabled={loading}>
+                {loading ? 'Sending...' : 'Send reset link'}
               </Button>
 
               <p className="text-center text-sm text-slate-500">
