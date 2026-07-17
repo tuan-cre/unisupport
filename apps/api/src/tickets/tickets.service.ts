@@ -14,6 +14,11 @@ import { ListTicketsQueryDto } from './dto/list-tickets.dto';
 import { BulkUpdateDto } from './dto/bulk-update.dto';
 import { CreateRelationDto } from './dto/relation.dto';
 import { CreateTimeEntryDto } from './dto/time-entry.dto';
+import {
+  ticketsCreatedCounter,
+  commentsAddedCounter,
+  ticketResolutionHistogram,
+} from '../metrics/metrics.module';
 
 @Injectable()
 export class TicketsService {
@@ -93,6 +98,11 @@ export class TicketsService {
       subject: ticket.subject,
       requesterId: ticket.requesterId,
       requesterEmail: ticket.requester.email,
+    });
+
+    ticketsCreatedCounter.inc({
+      priority: ticket.priority,
+      department: ticket.departmentId ?? 'none',
     });
 
     return ticket;
@@ -357,6 +367,8 @@ export class TicketsService {
         author: { select: { id: true, firstName: true, lastName: true, email: true } },
       },
     });
+
+    commentsAddedCounter.inc({ ticket_type: isAgentAdmin ? 'agent' : 'requester' });
 
     // Set firstResponseAt if an agent/admin responds for the first time
     if (isAgentAdmin && !dto.isInternal && !ticket.firstResponseAt) {

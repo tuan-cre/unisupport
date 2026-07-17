@@ -86,9 +86,8 @@ unisupport/
 │       │   └── i18n/            # en.json, vi.json, index.ts
 │       └── vite.config.ts
 ├── packages/shared/             # Shared types
-├── docker-compose.yml           # Dev infra (postgres, redis, minio, mailpit)
+├── docker-compose.yml           # Dev infra (postgres, redis, minio, mailpit, prometheus, grafana)
 ├── deploy.sh                    # Manual deploy
-├── deploy-poll.sh               # Auto-deploy (cron, polls git)
 └── package.json                 # Root workspace config
 ```
 
@@ -233,15 +232,9 @@ shadcn/ui primitives in `components/ui/`. Use these, don't create new primitives
 
 ## Deployment
 
-### Manual
-
 ```bash
 cd ~/unisupport && ./deploy.sh
 ```
-
-### Auto (cron every 5 min)
-
-`deploy-poll.sh` — polls git, deploys on new commits to `main`.
 
 ### What deploy.sh does
 
@@ -253,7 +246,10 @@ cd ~/unisupport && ./deploy.sh
 
 ### Infrastructure
 
-- Docker Compose: PostgreSQL, Redis, MinIO, Mailpit (all on localhost)
+- Docker Compose: PostgreSQL, Redis, MinIO, Mailpit, Prometheus, Grafana (all on localhost)
+- Grafana: `https://grafana.lhtuan.site` (admin/admin, change on first login)
+- Prometheus: `127.0.0.1:9090` (scrapes API every 15s)
+- Custom metrics: `unisupport_tickets_created_total`, `unisupport_comments_added_total`, `unisupport_ticket_resolution_seconds`, `unisupport_auth_attempts_total`
 - API runs as systemd service (`unisupport-api.service`)
 - Frontend served as static files from `/srv/unisupport/web/`
 - Nginx reverse proxy: `unisupport.lhtuan.site` → `localhost:3001` (API) + static files (web)

@@ -5,6 +5,7 @@ import { ThrottlerStorageRedisService } from '@nest-lab/throttler-storage-redis'
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { LoggerModule } from 'nestjs-pino';
 import { PrometheusModule } from '@willsoto/nestjs-prometheus';
+import { MetricsModule } from './metrics/metrics.module';
 
 const isPretty = process.env.NODE_ENV !== 'production' && process.env.NODE_ENV !== 'test';
 import { AppController } from './app.controller';
@@ -49,6 +50,7 @@ import { JobsModule } from './jobs/jobs.module';
       },
     }),
     PrometheusModule.register({ defaultMetrics: { enabled: true } }),
+    MetricsModule,
     AppConfigModule,
     PrismaModule,
     AuthModule,

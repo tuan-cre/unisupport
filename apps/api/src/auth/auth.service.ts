@@ -14,6 +14,7 @@ import { LoginDto } from './dto/login.dto';
 import * as crypto from 'crypto';
 import * as otplib from 'otplib';
 import * as qrcode from 'qrcode';
+import { authAttemptsCounter } from '../metrics/metrics.module';
 
 const ACCESS_TOKEN_EXPIRY = '15m';
 const REFRESH_TOKEN_EXPIRY_DAYS = 7;
@@ -136,6 +137,7 @@ export class AuthService {
         updateData.lockedUntil = new Date(Date.now() + LOCKOUT_DURATION_MIN * 60 * 1000);
       }
       await this.prisma.user.update({ where: { id: user.id }, data: updateData });
+      authAttemptsCounter.inc({ method: 'password', success: 'false' });
       throw new UnauthorizedException('Invalid email or password');
     }
 
@@ -149,6 +151,8 @@ export class AuthService {
 
     const full = await this.userWithRole(user.id);
     const tokens = await this.generateTokens(user.id, user.email);
+
+    authAttemptsCounter.inc({ method: 'password', success: 'true' });
 
     // If MFA is enabled, issue a partial token
     if (user.totpEnabled) {
