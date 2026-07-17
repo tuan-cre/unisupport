@@ -19,7 +19,7 @@ import AppLayout from '../components/app-layout';
 const TICKET_TYPES = ['INCIDENT', 'SERVICE_REQUEST', 'PROBLEM', 'CHANGE_REQUEST'];
 
 function RelatedArticles({ query }: { query: string }) {
-  const { t } = useTranslation(['common', 'page']);
+  const { t } = useTranslation();
   const { data, isLoading } = useQuery({
     queryKey: ['kb-suggest', query],
     queryFn: async () => {
@@ -41,7 +41,7 @@ function RelatedArticles({ query }: { query: string }) {
             key={a.id}
             href={`/kb/${a.slug}`}
             target="_blank"
-            className="rounded-md bg-white px-2 py-1 text-xs text-blue-600 hover:bg-blue-100 transition-colors"
+            className="rounded-md bg-card px-2 py-1 text-xs text-blue-600 hover:bg-blue-100 transition-colors"
           >
             {a.title}
           </a>
@@ -52,7 +52,7 @@ function RelatedArticles({ query }: { query: string }) {
 }
 
 export default function CreateTicketPage() {
-  const { t } = useTranslation(['common', 'ticket', 'page']);
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [subject, setSubject] = useState('');
@@ -165,7 +165,7 @@ export default function CreateTicketPage() {
 
             {templates && templates.length > 0 && (
               <div>
-                <label className="mb-1 block text-sm font-medium text-slate-700">
+                <label className="mb-1 block text-sm font-medium text-foreground">
                   {t('common.useTemplateOptional')}
                 </label>
                 <Select value={selectedTemplate} onValueChange={setSelectedTemplate}>
@@ -185,7 +185,7 @@ export default function CreateTicketPage() {
             )}
 
             <div>
-              <label className="mb-1 block text-sm font-medium text-slate-700">
+              <label className="mb-1 block text-sm font-medium text-foreground">
                 {t('ticket.subject')}
               </label>
               <Input
@@ -199,7 +199,7 @@ export default function CreateTicketPage() {
             <RelatedArticles query={subject} />
 
             <div>
-              <label className="mb-1 block text-sm font-medium text-slate-700">
+              <label className="mb-1 block text-sm font-medium text-foreground">
                 {t('ticket.description')}
               </label>
               <Textarea
@@ -215,7 +215,7 @@ export default function CreateTicketPage() {
 
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div>
-                <label className="mb-1 block text-sm font-medium text-slate-700">
+                <label className="mb-1 block text-sm font-medium text-foreground">
                   {t('ticket.type')}
                 </label>
                 <Select value={type} onValueChange={setType}>
@@ -233,7 +233,7 @@ export default function CreateTicketPage() {
                 </Select>
               </div>
               <div>
-                <label className="mb-1 block text-sm font-medium text-slate-700">
+                <label className="mb-1 block text-sm font-medium text-foreground">
                   {t('ticket.priority')}
                 </label>
                 <Select value={priority} onValueChange={setPriority}>
@@ -252,7 +252,7 @@ export default function CreateTicketPage() {
 
             {tags && tags.length > 0 && (
               <div>
-                <label className="mb-1 block text-sm font-medium text-slate-700">
+                <label className="mb-1 block text-sm font-medium text-foreground">
                   {t('ticket.tags')}
                 </label>
                 <div className="flex flex-wrap gap-1.5">
@@ -264,7 +264,7 @@ export default function CreateTicketPage() {
                       className={`rounded-full px-2.5 py-0.5 text-xs font-medium transition-colors ${
                         selectedTagIds.includes(tag.id)
                           ? 'bg-primary text-primary-foreground'
-                          : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                          : 'bg-muted text-muted-foreground hover:bg-accent'
                       }`}
                       style={
                         tag.color && !selectedTagIds.includes(tag.id)
@@ -280,7 +280,7 @@ export default function CreateTicketPage() {
             )}
 
             <div>
-              <label className="mb-1 block text-sm font-medium text-slate-700">
+              <label className="mb-1 block text-sm font-medium text-foreground">
                 {t('common.attachmentsOptional')}
               </label>
               <div className="flex flex-wrap gap-2">
@@ -289,7 +289,7 @@ export default function CreateTicketPage() {
                   type="file"
                   multiple
                   onChange={(e) => setFiles(Array.from(e.target.files || []))}
-                  className="block w-full text-sm text-slate-500 file:mr-3 file:rounded-lg file:border-0 file:bg-slate-100 file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-slate-700 hover:file:bg-slate-200"
+                  className="block w-full text-sm text-muted-foreground file:mr-3 file:rounded-lg file:border-0 file:bg-muted file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-foreground hover:file:bg-accent"
                 />
               </div>
               {files.length > 0 && (
@@ -297,7 +297,7 @@ export default function CreateTicketPage() {
                   {files.map((f, i) => (
                     <span
                       key={i}
-                      className="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-600"
+                      className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground"
                     >
                       {f.name}
                     </span>

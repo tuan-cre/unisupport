@@ -38,7 +38,7 @@ function RoleFormDialog({
 }) {
   const queryClient = useQueryClient();
   const { toast } = useToast();
-  const { t } = useTranslation(['common', 'page']);
+  const { t } = useTranslation();
   const [name, setName] = useState(role?.name ?? '');
   const [selectedIds, setSelectedIds] = useState<string[]>(
     role?.permissions.map((p) => p.id) ?? [],
@@ -102,19 +102,19 @@ function RoleFormDialog({
                 {allPermissions?.map((p) => (
                   <label
                     key={p.id}
-                    className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-slate-50"
+                    className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-muted"
                   >
                     <input
                       type="checkbox"
                       checked={selectedIds.includes(p.id)}
                       onChange={() => togglePermission(p.id)}
-                      className="h-4 w-4 rounded border-slate-300 text-primary focus:ring-primary"
+                      className="h-4 w-4 rounded border-border text-primary focus:ring-primary"
                     />
                     {p.name}
                   </label>
                 ))}
                 {allPermissions?.length === 0 && (
-                  <p className="text-sm text-slate-400">{t('No permissions available')}</p>
+                  <p className="text-sm text-muted-foreground">{t('No permissions available')}</p>
                 )}
               </div>
             )}
@@ -134,7 +134,7 @@ function RoleFormDialog({
 }
 
 export default function AdminRolesPage() {
-  const { t } = useTranslation(['common', 'page']);
+  const { t } = useTranslation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [showForm, setShowForm] = useState(false);
@@ -164,7 +164,7 @@ export default function AdminRolesPage() {
   return (
     <AdminLayout>
       <div className="mb-6 flex items-center justify-between">
-        <h2 className="text-xl font-semibold text-slate-900">{t('Roles')}</h2>
+        <h2 className="text-xl font-semibold text-foreground">{t('Roles')}</h2>
         <Button
           onClick={() => {
             setEditingRole(undefined);
@@ -183,14 +183,14 @@ export default function AdminRolesPage() {
         </div>
       )}
 
-      {roles && roles.length === 0 && <p className="text-slate-500">{t('No roles yet.')}</p>}
+      {roles && roles.length === 0 && <p className="text-muted-foreground">{t('No roles yet.')}</p>}
 
       {roles && roles.length > 0 && (
         <div className="space-y-3">
           {roles.map((role) => (
-            <div key={role.id} className="rounded-xl border bg-white p-4">
+            <div key={role.id} className="rounded-xl border bg-card p-4">
               <div className="flex items-center justify-between">
-                <h3 className="font-semibold text-slate-900">{role.name}</h3>
+                <h3 className="font-semibold text-foreground">{role.name}</h3>
                 <div className="flex gap-2">
                   <Button
                     variant="outline"
@@ -222,7 +222,7 @@ export default function AdminRolesPage() {
                   </Badge>
                 ))}
                 {role.permissions.length === 0 && (
-                  <span className="text-sm text-slate-400">{t('No permissions')}</span>
+                  <span className="text-sm text-muted-foreground">{t('No permissions')}</span>
                 )}
               </div>
             </div>

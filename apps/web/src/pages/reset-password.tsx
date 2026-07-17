@@ -7,7 +7,7 @@ import { Input } from '../components/ui/input';
 import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/card';
 
 export default function ResetPasswordPage() {
-  const { t } = useTranslation(['common', 'auth', 'page']);
+  const { t } = useTranslation();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const token = searchParams.get('token') || '';
@@ -41,14 +41,14 @@ export default function ResetPasswordPage() {
 
   if (!token) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-gradient-to-b from-white via-blue-50 to-blue-100 p-8">
+      <main className="flex min-h-screen items-center justify-center bg-gradient-to-b from-background via-background to-background dark:from-background dark:via-background dark:to-background p-8">
         <Card className="w-full max-w-sm text-center">
           <CardHeader>
-            <p className="text-6xl font-bold text-slate-300">400</p>
+            <p className="text-6xl font-bold text-muted-foreground">400</p>
             <CardTitle className="text-xl">{t('auth.invalidResetLink')}</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="mb-6 text-sm text-slate-500">{t('auth.resetLinkMissing')}</p>
+            <p className="mb-6 text-sm text-muted-foreground">{t('auth.resetLinkMissing')}</p>
             <Link to="/forgot-password">
               <Button>{t('auth.requestNewLink')}</Button>
             </Link>
@@ -59,7 +59,7 @@ export default function ResetPasswordPage() {
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-gradient-to-b from-white via-blue-50 to-blue-100 p-8">
+    <main className="flex min-h-screen items-center justify-center bg-gradient-to-b from-background via-background to-background dark:from-background dark:via-background dark:to-background p-8">
       <Card className="w-full max-w-sm">
         <CardHeader className="text-center">
           <p className="mb-1 text-xs font-bold uppercase tracking-[0.18em] text-blue-600">
@@ -72,7 +72,7 @@ export default function ResetPasswordPage() {
         <CardContent>
           {done ? (
             <div className="space-y-4">
-              <p className="text-sm text-slate-600">{t('auth.passwordHasBeenReset')}</p>
+              <p className="text-sm text-muted-foreground">{t('auth.passwordHasBeenReset')}</p>
               <Button onClick={() => navigate('/login')} className="w-full">
                 {t('auth.signIn')}
               </Button>
@@ -81,7 +81,7 @@ export default function ResetPasswordPage() {
             <form onSubmit={handleSubmit} className="space-y-4">
               {error && <p className="rounded-lg bg-red-50 p-3 text-sm text-red-600">{error}</p>}
               <div>
-                <label className="mb-1 block text-sm font-medium text-slate-700">
+                <label className="mb-1 block text-sm font-medium text-foreground">
                   {t('auth.newPassword')}
                 </label>
                 <Input
@@ -93,7 +93,7 @@ export default function ResetPasswordPage() {
                 />
               </div>
               <div>
-                <label className="mb-1 block text-sm font-medium text-slate-700">
+                <label className="mb-1 block text-sm font-medium text-foreground">
                   {t('auth.confirmPassword')}
                 </label>
                 <Input

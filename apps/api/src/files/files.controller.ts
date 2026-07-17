@@ -39,6 +39,10 @@ export class FilesController {
     const { stream, attachment } = await this.files.download(id, req.user!.id);
     res.setHeader('Content-Type', attachment.mimeType);
     res.setHeader('Content-Disposition', `inline; filename="${attachment.originalName}"`);
+    stream.on('error', () => {
+      if (!res.headersSent) res.status(500).end();
+    });
+    res.on('close', () => stream.destroy());
     stream.pipe(res);
   }
 

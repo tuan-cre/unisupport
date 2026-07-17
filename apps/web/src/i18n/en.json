@@ -106,7 +106,8 @@
     "verified": "Verified",
     "verifying": "Verifying...",
     "verifyingTitle": "Verifying Title",
-    "viewAll": "View All"
+    "viewAll": "View All",
+    "welcome": "Welcome, {{name}}"
   },
   "nav": {
     "dashboard": "Dashboard",
@@ -258,16 +259,8 @@
   "Create Role": "Create Role",
   "Create SLA": "Create SLA",
   "Create User": "Create User",
-  "Create your first problem record": {
-    "": ""
-  },
-  "Creating": {
-    "": {
-      "": {
-        "": ""
-      }
-    }
-  },
+  "Create your first problem record.": "Create your first problem record.",
+  "Creating...": "Creating...",
   "CSAT (Satisfaction)": "CSAT (Satisfaction)",
   "CSV": "CSV",
   "/dashboard/stats": "/Dashboard/Stats",
@@ -312,9 +305,7 @@
   "Knowledge Base": "Knowledge Base",
   "/known-errors": "/Known Errors",
   "Known Errors": "Known Errors",
-  "Known errors appear here when logged": {
-    "": ""
-  },
+  "Known errors appear here when logged": "Known errors appear here when logged",
   "Last name": "Last Name",
   "License key": "License Key",
   "Licenses": "Licenses",
@@ -332,30 +323,20 @@
   "New Problem": "New Problem",
   "New Software License": "New Software License",
   "Next": "Next",
-  "No articles yet": {
-    "": ""
-  },
+  "No articles yet": "No articles yet",
   "No category": "No Category",
   "No department": "No Department",
-  "No departments yet": {
-    "": ""
-  },
+  "No departments yet": "No departments yet",
   "No known errors": "No Known Errors",
   "No permissions": "No Permissions",
   "No permissions available": "No Permissions Available",
   "No problems": "No Problems",
   "No role": "No Role",
-  "No roles yet": {
-    "": ""
-  },
-  "No SLA policies yet": {
-    "": ""
-  },
+  "No roles yet": "No roles yet",
+  "No SLA policies yet": "No SLA policies yet",
   "Notes": "Notes",
   "/notifications": "/Notifications",
-  "No users found": {
-    "": ""
-  },
+  "No users found": "No users found",
   "of": "Of",
   "Open": "Open",
   "Other": "Other",
@@ -373,13 +354,7 @@
   "Problems": "Problems",
   "Published": "Published",
   "Recent:": "Recent:",
-  "Reply": {
-    "": {
-      "": {
-        "": ""
-      }
-    }
-  },
+  "Reply...": "Reply...",
   "Reports": "Reports",
   "Resolution": "Resolution",
   "Resolution:": "Resolution:",
@@ -400,20 +375,8 @@
   "Role updated": "Role Updated",
   "Root cause": "Root Cause",
   "Save": "Save",
-  "Saving": {
-    "": {
-      "": {
-        "": ""
-      }
-    }
-  },
-  "Search users": {
-    "": {
-      "": {
-        "": ""
-      }
-    }
-  },
+  "Saving...": "Saving...",
+  "Search users...": "Search users...",
   "Serial number": "Serial Number",
   "Severity": "Severity",
   "SLA Compliance": "SLA Compliance",
@@ -428,9 +391,7 @@
   "Subject": "Subject",
   "/tags": "/Tags",
   "/templates": "/Templates",
-  "This will permanently delete this problem record and its linked relations": {
-    "": ""
-  },
+  "This will permanently delete this problem record and its linked relations": "This will permanently delete this problem record and its linked relations",
   "Ticket IDs (comma-separated)": "Ticket IDs (Comma Separated)",
   "ticket(s) linked": "Ticket(S) Linked",
   "Ticket Volume": "Ticket Volume",

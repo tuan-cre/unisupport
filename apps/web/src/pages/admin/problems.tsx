@@ -53,8 +53,9 @@ const statusColors: Record<string, string> = {
 };
 
 export default function AdminProblemsPage() {
-  const { t } = useTranslation(['common', 'page']);
+  const { t } = useTranslation();
   const qc = useQueryClient();
+  const [page, setPage] = useState(1);
   const [editing, setEditing] = useState<Problem | null>(null);
   const [showCreate, setShowCreate] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
@@ -78,10 +79,10 @@ export default function AdminProblemsPage() {
   });
 
   const { data, isLoading } = useQuery({
-    queryKey: ['admin-problems'],
+    queryKey: ['admin-problems', page],
     queryFn: async () => {
-      const r = await api.get('/problems');
-      return r.data.data as Problem[];
+      const r = await api.get('/problems', { params: { page, limit: 20 } });
+      return { items: r.data.data as Problem[], meta: r.data.meta };
     },
   });
 
@@ -132,7 +133,7 @@ export default function AdminProblemsPage() {
   return (
     <AdminLayout>
       <div className="mb-4 flex items-center justify-between">
-        <h2 className="text-xl font-semibold text-slate-900">{t('Problems')}</h2>
+        <h2 className="text-xl font-semibold text-foreground">{t('Problems')}</h2>
         <Dialog open={showCreate} onOpenChange={setShowCreate}>
           <DialogTrigger asChild>
             <Button size="sm">
@@ -151,7 +152,7 @@ export default function AdminProblemsPage() {
                 onChange={(e) => setForm({ ...form, subject: e.target.value })}
               />
               <textarea
-                className="rounded-md border border-slate-200 p-2 text-sm"
+                className="rounded-md border border-border p-2 text-sm"
                 rows={3}
                 placeholder={t('Description')}
                 value={form.description}
@@ -196,25 +197,25 @@ export default function AdminProblemsPage() {
       </div>
 
       {isLoading && <Skeleton className="h-64 w-full" />}
-      {!isLoading && (!data || data.length === 0) && (
+      {!isLoading && (!data?.items || data.items.length === 0) && (
         <EmptyState title={t('No problems')} message={t('Create your first problem record.')} />
       )}
-      {data?.map((p: Problem) => (
+      {data?.items?.map((p: Problem) => (
         <Card key={p.id} className="mb-3">
           <CardContent className="flex items-start justify-between p-4">
             <div className="min-w-0 flex-1">
               <div className="mb-1 flex items-center gap-2">
                 <Badge className={statusColors[p.status]}>{p.status}</Badge>
-                <span className="text-sm font-medium text-slate-900">{p.subject}</span>
+                <span className="text-sm font-medium text-foreground">{p.subject}</span>
               </div>
-              <p className="text-xs text-slate-500 line-clamp-2">{p.description}</p>
+              <p className="text-xs text-muted-foreground line-clamp-2">{p.description}</p>
               {p.assignedTo && (
-                <p className="mt-1 text-xs text-slate-400">
+                <p className="mt-1 text-xs text-muted-foreground">
                   {t('Assignee')}: {p.assignedTo.firstName} {p.assignedTo.lastName}
                 </p>
               )}
               {p.tickets && p.tickets.length > 0 && (
-                <p className="text-xs text-slate-400">
+                <p className="text-xs text-muted-foreground">
                   {p.tickets.length} {t('ticket(s) linked')}
                 </p>
               )}
@@ -248,7 +249,7 @@ export default function AdminProblemsPage() {
                 onChange={(e) => setEditForm({ ...editForm, subject: e.target.value })}
               />
               <textarea
-                className="rounded-md border border-slate-200 p-2 text-sm"
+                className="rounded-md border border-border p-2 text-sm"
                 rows={3}
                 value={editForm.description}
                 onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
@@ -291,6 +292,30 @@ export default function AdminProblemsPage() {
           )}
         </DialogContent>
       </Dialog>
+
+      <div className="mt-4 flex items-center justify-between">
+        <p className="text-sm text-muted-foreground">
+          {t('Page')} {page} / {data?.meta?.totalPages ?? 1}
+        </p>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={page <= 1}
+            onClick={() => setPage((p) => p - 1)}
+          >
+            {t('Previous')}
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={page >= (data?.meta?.totalPages ?? 1)}
+            onClick={() => setPage((p) => p + 1)}
+          >
+            {t('Next')}
+          </Button>
+        </div>
+      </div>
 
       <ConfirmDialog
         open={!!deleteId}

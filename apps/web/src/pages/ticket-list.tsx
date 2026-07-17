@@ -52,7 +52,7 @@ const statusBadge: Record<string, string> = {
 } as const;
 
 const priorityColor: Record<string, string> = {
-  LOW: 'text-slate-500',
+  LOW: 'text-muted-foreground',
   MEDIUM: 'text-blue-600 font-medium',
   HIGH: 'text-orange-600 font-medium',
   URGENT: 'text-red-600 font-semibold',
@@ -68,7 +68,7 @@ function useDebounce<T>(value: T, delay: number): T {
 }
 
 export default function TicketListPage() {
-  const { t } = useTranslation('common');
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
@@ -93,7 +93,7 @@ export default function TicketListPage() {
   return (
     <AppLayout>
       <div className="mb-6 flex items-center justify-between">
-        <h2 className="text-xl font-semibold text-slate-900">{t('page.tickets')}</h2>
+        <h2 className="text-xl font-semibold text-foreground">{t('page.tickets')}</h2>
       </div>
 
       <div className="mb-4 flex flex-wrap gap-3">
@@ -154,7 +154,7 @@ export default function TicketListPage() {
       )}
 
       {data && data?.tickets?.length === 0 && (
-        <p className="text-slate-500">
+        <p className="text-muted-foreground">
           {t('common.noTicketsFound')}{' '}
           <Link to="/tickets/new" className="text-blue-600 hover:underline">
             {t('common.createOne')}
@@ -164,7 +164,7 @@ export default function TicketListPage() {
 
       {data && data?.tickets?.length > 0 && (
         <>
-          <div className="overflow-hidden rounded-xl border bg-white">
+          <div className="overflow-hidden rounded-xl border bg-card">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -186,19 +186,19 @@ export default function TicketListPage() {
                   >
                     <TableCell>
                       <div className="max-w-64">
-                        <p className="truncate font-medium text-slate-900">{ticket.subject}</p>
+                        <p className="truncate font-medium text-foreground">{ticket.subject}</p>
                         {ticket.tags && ticket.tags.length > 0 && (
                           <div className="mt-1 flex flex-wrap gap-1">
                             {ticket.tags.slice(0, 3).map((tt) => (
                               <span
                                 key={tt.tag.id}
-                                className="rounded-full bg-slate-100 px-1.5 py-0 text-[10px] font-medium text-slate-600"
+                                className="rounded-full bg-muted px-1.5 py-0 text-[10px] font-medium text-muted-foreground"
                               >
                                 {tt.tag.name}
                               </span>
                             ))}
                             {ticket.tags.length > 3 && (
-                              <span className="text-[10px] text-slate-400">
+                              <span className="text-[10px] text-muted-foreground">
                                 +{ticket.tags.length - 3}
                               </span>
                             )}
@@ -214,18 +214,18 @@ export default function TicketListPage() {
                     <TableCell className={priorityColor[ticket.priority] || ''}>
                       {ticket.priority}
                     </TableCell>
-                    <TableCell className="text-slate-600 text-xs">
+                    <TableCell className="text-muted-foreground text-xs">
                       {ticket.type ? ticket.type.replace('_', ' ') : '\u2014'}
                     </TableCell>
-                    <TableCell className="text-slate-600">
+                    <TableCell className="text-muted-foreground">
                       {ticket.requester.firstName} {ticket.requester.lastName}
                     </TableCell>
-                    <TableCell className="text-slate-600">
+                    <TableCell className="text-muted-foreground">
                       {ticket.assignee
                         ? `${ticket.assignee.firstName} ${ticket.assignee.lastName}`
                         : '\u2014'}
                     </TableCell>
-                    <TableCell className="text-slate-500">
+                    <TableCell className="text-muted-foreground">
                       {new Date(ticket.createdAt).toLocaleDateString()}
                     </TableCell>
                   </TableRow>
@@ -235,7 +235,7 @@ export default function TicketListPage() {
           </div>
 
           {data && data.meta && (
-            <div className="mt-4 flex items-center justify-between text-sm text-slate-500">
+            <div className="mt-4 flex items-center justify-between text-sm text-muted-foreground">
               <span>
                 {t('common.page')} {data.meta.page} {t('common.of')} {data.meta.totalPages} (
                 {data.meta.total} {t('page.tickets').toLowerCase()})

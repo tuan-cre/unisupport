@@ -40,8 +40,8 @@ export default function KbListPage() {
   return (
     <AppLayout>
       <div className="mb-6 flex items-center gap-3">
-        <BookOpen className="h-5 w-5 text-slate-500" />
-        <h2 className="text-xl font-semibold text-slate-900">Knowledge Base</h2>
+        <BookOpen className="h-5 w-5 text-muted-foreground" />
+        <h2 className="text-xl font-semibold text-foreground">Knowledge Base</h2>
       </div>
 
       <div className="mb-6 flex flex-wrap gap-3">
@@ -54,7 +54,7 @@ export default function KbListPage() {
         <select
           value={selectedCategory}
           onChange={(e) => setSelectedCategory(e.target.value)}
-          className="rounded-lg border border-slate-300 px-3 py-2 text-sm"
+          className="rounded-lg border border-border px-3 py-2 text-sm"
         >
           <option value="">All categories</option>
           {categories?.map((c) => (
@@ -73,7 +73,9 @@ export default function KbListPage() {
         </div>
       )}
 
-      {articles && articles.length === 0 && <p className="text-slate-500">No articles found.</p>}
+      {articles && articles.length === 0 && (
+        <p className="text-muted-foreground">No articles found.</p>
+      )}
 
       {articles && articles.length > 0 && (
         <div className="space-y-3">
@@ -81,10 +83,10 @@ export default function KbListPage() {
             <Link
               key={a.id}
               to={`/kb/${a.slug}`}
-              className="block rounded-xl border bg-white p-4 transition-colors hover:bg-slate-50"
+              className="block rounded-xl border bg-card p-4 transition-colors hover:bg-muted"
             >
-              <h3 className="font-medium text-slate-900">{a.title}</h3>
-              <p className="mt-0.5 text-xs text-slate-500">
+              <h3 className="font-medium text-foreground">{a.title}</h3>
+              <p className="mt-0.5 text-xs text-muted-foreground">
                 {a.category?.name && <>{a.category.name} &middot; </>}
                 {new Date(a.createdAt).toLocaleDateString()}
               </p>

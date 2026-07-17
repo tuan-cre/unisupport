@@ -31,7 +31,7 @@ interface KbArticle {
 }
 
 export default function AdminKbPage() {
-  const { t } = useTranslation(['common', 'page']);
+  const { t } = useTranslation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [showForm, setShowForm] = useState(false);
@@ -101,7 +101,7 @@ export default function AdminKbPage() {
   return (
     <AdminLayout>
       <div className="mb-6 flex items-center justify-between">
-        <h2 className="text-xl font-semibold text-slate-900">{t('Knowledge Base')}</h2>
+        <h2 className="text-xl font-semibold text-foreground">{t('Knowledge Base')}</h2>
         <Button
           onClick={() => {
             setEditing(null);
@@ -125,17 +125,17 @@ export default function AdminKbPage() {
       )}
 
       {articles && articles.length === 0 && (
-        <p className="text-slate-500">{t('No articles yet.')}</p>
+        <p className="text-muted-foreground">{t('No articles yet.')}</p>
       )}
 
       {articles && articles.length > 0 && (
         <div className="space-y-3">
           {articles.map((a: KbArticle) => (
-            <div key={a.id} className="rounded-xl border bg-white p-4">
+            <div key={a.id} className="rounded-xl border bg-card p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="font-medium text-slate-900">{a.title}</h3>
-                  <div className="mt-0.5 flex items-center gap-2 text-xs text-slate-500">
+                  <h3 className="font-medium text-foreground">{a.title}</h3>
+                  <div className="mt-0.5 flex items-center gap-2 text-xs text-muted-foreground">
                     {a.category?.name && <span>{a.category.name}</span>}
                     <Badge variant={a.published ? 'default' : 'secondary'}>
                       {a.published ? t('Published') : t('Draft')}

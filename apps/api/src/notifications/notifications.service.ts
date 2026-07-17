@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, Logger } from '@nestjs/common';
 import * as nodemailer from 'nodemailer';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../prisma/prisma.service';
@@ -7,6 +7,7 @@ import { EventsGateway } from '../events/events.gateway';
 @Injectable()
 export class NotificationsService {
   private transporter: nodemailer.Transporter;
+  private readonly logger = new Logger(NotificationsService.name);
 
   constructor(
     private prisma: PrismaService,
@@ -98,7 +99,7 @@ export class NotificationsService {
         text,
         html,
       })
-      .catch((err) => console.error('Email send failed:', err.message));
+      .catch((err) => this.logger.error({ err: err.message }, 'Email send failed'));
   }
 
   async onTicketCreated(ticket: {
@@ -132,7 +133,11 @@ export class NotificationsService {
         })),
       });
       for (const r of recipients) {
-        this.events.notifyUser(r.id, 'notification', { type: 'ticket_created', title: 'New ticket', message: ticket.subject });
+        this.events.notifyUser(r.id, 'notification', {
+          type: 'ticket_created',
+          title: 'New ticket',
+          message: ticket.subject,
+        });
       }
     }
 

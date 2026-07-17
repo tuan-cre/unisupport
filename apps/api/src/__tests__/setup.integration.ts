@@ -4,7 +4,7 @@ import request from 'supertest';
 import { ConfigModule } from '@nestjs/config';
 import { PrismaService } from '../prisma/prisma.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { RolesGuard } from '../auth/guards/roles.guard';
+import { RolesGuard } from '../tickets/guards/roles.guard';
 import { JwtService } from '@nestjs/jwt';
 import { AppModule } from '../app.module';
 import * as bcrypt from 'bcrypt';
@@ -46,10 +46,11 @@ async function ensureTestDatabase(): Promise<void> {
   try {
     await prisma.$connect();
     const dbName = dbUrl.split('/').pop()!.split('?')[0];
-    const res = await prisma.$queryRaw<[{ datname: string }]>(
-      `SELECT datname FROM pg_database WHERE datname = ${dbName}`,
+    const rows: { datname: string }[] = await prisma.$queryRawUnsafe(
+      `SELECT datname FROM pg_database WHERE datname = $1`,
+      dbName,
     );
-    if (res.length === 0) {
+    if (rows.length === 0) {
       await prisma.$executeRawUnsafe(`CREATE DATABASE "${dbName}"`);
     }
   } finally {
@@ -63,6 +64,7 @@ async function runMigrations(): Promise<void> {
   const prisma = new PrismaClient();
   try {
     await prisma.$connect();
+    // @ts-expect-error - @prisma/migrate has no type declarations
     const { migrateDeploy } = await import('@prisma/migrate');
     await migrateDeploy({ prisma });
   } finally {
@@ -155,7 +157,7 @@ export async function setup(): Promise<{
   await runMigrations();
 
   // Build testing module without Prisma/Notifications overrides (real DB)
-  const moduleFixture: TestingModule = Test.createTestingModule({
+  const moduleFixture = Test.createTestingModule({
     imports: [ConfigModule.forRoot({ isGlobal: true }), AppModule],
   })
     .overrideProvider(JwtAuthGuard)
@@ -163,7 +165,7 @@ export async function setup(): Promise<{
     .overrideProvider(RolesGuard)
     .useValue(bypassGuard());
 
-  const module = await moduleFixture.compile();
+  const module: TestingModule = await moduleFixture.compile();
 
   const app = module.createNestApplication();
   app.setGlobalPrefix('api');

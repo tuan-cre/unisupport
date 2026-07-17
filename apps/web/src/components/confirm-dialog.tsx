@@ -5,7 +5,7 @@ import { Button } from './ui/button';
 interface ConfirmDialogProps {
   open: boolean;
   onOpenChange: (v: boolean) => void;
-  onConfirm: () => void;
+  onConfirm: () => void | Promise<void>;
   title?: string;
   description?: string;
   confirmLabel?: string;
@@ -40,7 +40,10 @@ export default function ConfirmDialog({
             onClick={async () => {
               setLoading(true);
               try {
-                await onConfirm();
+                const result = onConfirm();
+                if (result instanceof Promise) {
+                  await result;
+                }
               } finally {
                 setLoading(false);
                 onOpenChange(false);

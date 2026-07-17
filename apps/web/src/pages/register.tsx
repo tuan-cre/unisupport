@@ -7,7 +7,7 @@ import { Input } from '../components/ui/input';
 import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/card';
 
 export default function RegisterPage() {
-  const { t } = useTranslation(['common', 'auth', 'page']);
+  const { t } = useTranslation();
   const { register } = useAuth();
   const navigate = useNavigate();
   const [firstName, setFirstName] = useState('');
@@ -48,7 +48,7 @@ export default function RegisterPage() {
   };
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-gradient-to-b from-white via-blue-50 to-blue-100 p-8">
+    <main className="flex min-h-screen items-center justify-center bg-gradient-to-b from-background via-background to-background dark:from-background dark:via-background dark:to-background p-8">
       <Card className="w-full max-w-sm">
         <CardHeader className="text-center">
           <p className="mb-1 text-xs font-bold uppercase tracking-[0.18em] text-blue-600">
@@ -65,7 +65,7 @@ export default function RegisterPage() {
             <div>
               <label
                 htmlFor="register-firstname"
-                className="mb-1 block text-sm font-medium text-slate-700"
+                className="mb-1 block text-sm font-medium text-foreground"
               >
                 {t('common.firstLabel')}
               </label>
@@ -81,7 +81,7 @@ export default function RegisterPage() {
             <div>
               <label
                 htmlFor="register-lastname"
-                className="mb-1 block text-sm font-medium text-slate-700"
+                className="mb-1 block text-sm font-medium text-foreground"
               >
                 {t('common.lastLabel')}
               </label>
@@ -97,7 +97,7 @@ export default function RegisterPage() {
             <div>
               <label
                 htmlFor="register-email"
-                className="mb-1 block text-sm font-medium text-slate-700"
+                className="mb-1 block text-sm font-medium text-foreground"
               >
                 {t('auth.email')}
               </label>
@@ -114,7 +114,7 @@ export default function RegisterPage() {
             <div>
               <label
                 htmlFor="register-password"
-                className="mb-1 block text-sm font-medium text-slate-700"
+                className="mb-1 block text-sm font-medium text-foreground"
               >
                 {t('auth.password')}
               </label>
@@ -132,7 +132,7 @@ export default function RegisterPage() {
               {loading ? t('common.registering') : t('auth.signUp')}
             </Button>
 
-            <p className="text-center text-sm text-slate-500">
+            <p className="text-center text-sm text-muted-foreground">
               {t('common.alreadyAccount')}{' '}
               <Link to="/login" className="text-blue-600 hover:underline">
                 {t('auth.signIn')}

@@ -83,9 +83,10 @@ export class AuthService {
       throw new ConflictException('Email already registered');
     }
 
-    const defaultRole = await this.prisma.role.findUnique({ where: { name: 'user' } });
+    const defaultRoleName = process.env.DEFAULT_USER_ROLE || 'user';
+    const defaultRole = await this.prisma.role.findUnique({ where: { name: defaultRoleName } });
     if (!defaultRole) {
-      const created = await this.prisma.role.create({ data: { name: 'user' } });
+      const created = await this.prisma.role.create({ data: { name: defaultRoleName } });
       return this.completeRegistration(dto, created.id);
     }
 
@@ -436,7 +437,12 @@ export class AuthService {
     return crypto.createHash('sha256').update(token).digest('hex');
   }
 
-  async handleSamlLogin(profile: { nameID: string; email: string; firstName: string; lastName: string }) {
+  async handleSamlLogin(profile: {
+    nameID: string;
+    email: string;
+    firstName: string;
+    lastName: string;
+  }) {
     let user = await this.prisma.user.findUnique({ where: { samlId: profile.nameID } });
     if (!user) {
       user = await this.prisma.user.findUnique({ where: { email: profile.email } });

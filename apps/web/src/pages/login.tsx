@@ -7,7 +7,7 @@ import { Input } from '../components/ui/input';
 import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/card';
 
 export default function LoginPage() {
-  const { t } = useTranslation(['common', 'auth', 'page']);
+  const { t } = useTranslation();
   const { login } = useAuth();
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
@@ -43,7 +43,7 @@ export default function LoginPage() {
   };
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-gradient-to-b from-white via-blue-50 to-blue-100 p-8">
+    <main className="flex min-h-screen items-center justify-center bg-gradient-to-b from-background via-background to-background dark:from-background dark:via-background dark:to-background p-8">
       <Card className="w-full max-w-sm">
         <CardHeader className="text-center">
           <p className="mb-1 text-xs font-bold uppercase tracking-[0.18em] text-blue-600">
@@ -60,7 +60,7 @@ export default function LoginPage() {
             <div>
               <label
                 htmlFor="login-email"
-                className="mb-1 block text-sm font-medium text-slate-700"
+                className="mb-1 block text-sm font-medium text-foreground"
               >
                 {t('auth.email')}
               </label>
@@ -77,7 +77,7 @@ export default function LoginPage() {
             <div>
               <label
                 htmlFor="login-password"
-                className="mb-1 block text-sm font-medium text-slate-700"
+                className="mb-1 block text-sm font-medium text-foreground"
               >
                 {t('auth.password')}
               </label>
@@ -101,7 +101,7 @@ export default function LoginPage() {
               {loading ? t('common.loading') : t('auth.signIn')}
             </Button>
 
-            <p className="text-center text-sm text-slate-500">
+            <p className="text-center text-sm text-muted-foreground">
               {t('common.noAccount')}{' '}
               <Link to="/register" className="text-blue-600 hover:underline">
                 {t('auth.signUp')}
@@ -111,16 +111,16 @@ export default function LoginPage() {
 
           <div className="relative my-4">
             <div className="absolute inset-0 flex items-center">
-              <span className="w-full border-t border-slate-200" />
+              <span className="w-full border-t border-border" />
             </div>
             <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-white px-2 text-slate-400">{t('common.or')}</span>
+              <span className="bg-background px-2 text-muted-foreground">{t('common.or')}</span>
             </div>
           </div>
 
           <a
             href="/api/auth/saml/login"
-            className="flex w-full items-center justify-center gap-2 rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+            className="flex w-full items-center justify-center gap-2 rounded-lg border border-border px-4 py-2 text-sm font-medium text-foreground hover:bg-muted"
           >
             {t('common.universitySSO')}
           </a>

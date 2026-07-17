@@ -13,9 +13,9 @@ export default function EmptyState({
 }: EmptyStateProps) {
   return (
     <div className="flex flex-col items-center justify-center py-16 text-center">
-      <FileQuestion className="mb-4 h-12 w-12 text-slate-300" />
-      <h3 className="text-base font-medium text-slate-500">{title}</h3>
-      <p className="mt-1 text-sm text-slate-400">{message}</p>
+      <FileQuestion className="mb-4 h-12 w-12 text-muted-foreground" />
+      <h3 className="text-base font-medium text-muted-foreground">{title}</h3>
+      <p className="mt-1 text-sm text-muted-foreground">{message}</p>
       {action && <div className="mt-4">{action}</div>}
     </div>
   );

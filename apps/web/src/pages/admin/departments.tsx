@@ -31,7 +31,7 @@ function DepartmentFormDialog({
 }) {
   const queryClient = useQueryClient();
   const { toast } = useToast();
-  const { t } = useTranslation(['common', 'page']);
+  const { t } = useTranslation();
   const [name, setName] = useState(dept?.name ?? '');
 
   const mutation = useMutation({
@@ -81,7 +81,7 @@ function DepartmentFormDialog({
 }
 
 export default function AdminDepartmentsPage() {
-  const { t } = useTranslation(['common', 'page']);
+  const { t } = useTranslation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [showForm, setShowForm] = useState(false);
@@ -111,7 +111,7 @@ export default function AdminDepartmentsPage() {
   return (
     <AdminLayout>
       <div className="mb-6 flex items-center justify-between">
-        <h2 className="text-xl font-semibold text-slate-900">{t('Departments')}</h2>
+        <h2 className="text-xl font-semibold text-foreground">{t('Departments')}</h2>
         <Button
           onClick={() => {
             setEditingDept(undefined);
@@ -130,14 +130,16 @@ export default function AdminDepartmentsPage() {
         </div>
       )}
 
-      {depts && depts.length === 0 && <p className="text-slate-500">{t('No departments yet.')}</p>}
+      {depts && depts.length === 0 && (
+        <p className="text-muted-foreground">{t('No departments yet.')}</p>
+      )}
 
       {depts && depts.length > 0 && (
-        <div className="overflow-hidden rounded-xl border bg-white">
+        <div className="overflow-hidden rounded-xl border bg-card">
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="border-b bg-slate-50 text-left text-sm font-medium text-slate-600">
+                <tr className="border-b bg-muted text-left text-sm font-medium text-muted-foreground">
                   <th className="px-4 py-3">{t('Name')}</th>
                   <th className="px-4 py-3 text-right">{t('Actions')}</th>
                 </tr>
@@ -145,7 +147,7 @@ export default function AdminDepartmentsPage() {
               <tbody>
                 {depts.map((d) => (
                   <tr key={d.id} className="border-b last:border-0">
-                    <td className="px-4 py-3 text-sm font-medium text-slate-900">{d.name}</td>
+                    <td className="px-4 py-3 text-sm font-medium text-foreground">{d.name}</td>
                     <td className="px-4 py-3 text-right">
                       <div className="flex justify-end gap-2">
                         <Button

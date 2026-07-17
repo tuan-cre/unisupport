@@ -7,7 +7,7 @@ import { Input } from '../components/ui/input';
 import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/card';
 
 export default function ForgotPasswordPage() {
-  const { t } = useTranslation(['common', 'auth', 'page']);
+  const { t } = useTranslation();
   const [email, setEmail] = useState('');
   const [sent, setSent] = useState(false);
   const [resetLink, setResetLink] = useState('');
@@ -30,7 +30,7 @@ export default function ForgotPasswordPage() {
   };
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-gradient-to-b from-white via-blue-50 to-blue-100 p-8">
+    <main className="flex min-h-screen items-center justify-center bg-gradient-to-b from-background via-background to-background dark:from-background dark:via-background dark:to-background p-8">
       <Card className="w-full max-w-sm">
         <CardHeader className="text-center">
           <p className="mb-1 text-xs font-bold uppercase tracking-[0.18em] text-blue-600">
@@ -41,7 +41,7 @@ export default function ForgotPasswordPage() {
         <CardContent>
           {sent ? (
             <div className="space-y-4">
-              <p className="text-sm text-slate-600">{t('auth.resetLinkSent')}</p>
+              <p className="text-sm text-muted-foreground">{t('auth.resetLinkSent')}</p>
               {resetLink && (
                 <p className="rounded-lg bg-blue-50 p-3 text-xs text-blue-700 break-all">
                   {t('auth.resetDevLink')}{' '}
@@ -58,7 +58,7 @@ export default function ForgotPasswordPage() {
             <form onSubmit={handleSubmit} className="space-y-4">
               {error && <p className="rounded-lg bg-red-50 p-3 text-sm text-red-600">{error}</p>}
               <div>
-                <label className="mb-1 block text-sm font-medium text-slate-700">
+                <label className="mb-1 block text-sm font-medium text-foreground">
                   {t('auth.email')}
                 </label>
                 <Input
@@ -71,7 +71,7 @@ export default function ForgotPasswordPage() {
               <Button type="submit" className="w-full" disabled={loading}>
                 {loading ? t('common.sending') : t('common.sendResetLink')}
               </Button>
-              <p className="text-center text-sm text-slate-500">
+              <p className="text-center text-sm text-muted-foreground">
                 <Link to="/login" className="text-blue-600 hover:underline">
                   {t('common.backToSignIn')}
                 </Link>

@@ -7,9 +7,10 @@ import { Button } from './ui/button';
 interface CsatSurveyProps {
   ticketId: string;
   rating?: { rating: number; feedback: string | null };
+  onSuccess?: () => void;
 }
 
-export default function CsatSurvey({ ticketId, rating: existing }: CsatSurveyProps) {
+export default function CsatSurvey({ ticketId, rating: existing, onSuccess }: CsatSurveyProps) {
   const [rating, setRating] = useState(existing?.rating ?? 0);
   const [feedback, setFeedback] = useState(existing?.feedback ?? '');
   const [submitted, setSubmitted] = useState(!!existing);
@@ -18,7 +19,10 @@ export default function CsatSurvey({ ticketId, rating: existing }: CsatSurveyPro
     mutationFn: async ({ rating, feedback }: { rating: number; feedback: string }) => {
       await api.post(`/tickets/${ticketId}/rate`, { rating, feedback });
     },
-    onSuccess: () => setSubmitted(true),
+    onSuccess: () => {
+      setSubmitted(true);
+      onSuccess?.();
+    },
   });
 
   if (submitted) {
@@ -36,7 +40,9 @@ export default function CsatSurvey({ ticketId, rating: existing }: CsatSurveyPro
   return (
     <Card className="mt-4">
       <CardContent className="py-4">
-        <p className="mb-2 text-sm font-medium text-slate-700">How would you rate your experience?</p>
+        <p className="mb-2 text-sm font-medium text-foreground">
+          How would you rate your experience?
+        </p>
         <div className="mb-3 flex gap-1">
           {[1, 2, 3, 4, 5].map((star) => (
             <button
@@ -44,7 +50,7 @@ export default function CsatSurvey({ ticketId, rating: existing }: CsatSurveyPro
               type="button"
               onClick={() => setRating(star)}
               className={`h-8 w-8 rounded-md text-lg transition-colors ${
-                star <= rating ? 'bg-yellow-400 text-white' : 'bg-slate-100 text-slate-400'
+                star <= rating ? 'bg-yellow-400 text-white' : 'bg-muted text-muted-foreground'
               }`}
             >
               ★
@@ -55,7 +61,7 @@ export default function CsatSurvey({ ticketId, rating: existing }: CsatSurveyPro
           placeholder="Any additional feedback? (optional)"
           value={feedback}
           onChange={(e) => setFeedback(e.target.value)}
-          className="mb-3 w-full rounded-lg border border-slate-200 p-2 text-sm"
+          className="mb-3 w-full rounded-lg border border-border p-2 text-sm"
           rows={2}
         />
         <Button

@@ -39,7 +39,7 @@ export default function KbArticlePage() {
   if (!article) {
     return (
       <AppLayout>
-        <p className="text-slate-500">Article not found.</p>
+        <p className="text-muted-foreground">Article not found.</p>
       </AppLayout>
     );
   }
@@ -48,15 +48,15 @@ export default function KbArticlePage() {
     <AppLayout>
       <button
         onClick={() => navigate('/kb')}
-        className="mb-4 flex items-center gap-2 text-sm text-slate-500 hover:text-slate-900 transition-colors"
+        className="mb-4 flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
       >
         <ArrowLeft className="h-4 w-4" />
         Back to Knowledge Base
       </button>
 
       <article>
-        <h1 className="text-2xl font-bold text-slate-900">{article.title}</h1>
-        <p className="text-xs text-slate-500">
+        <h1 className="text-2xl font-bold text-foreground">{article.title}</h1>
+        <p className="text-xs text-muted-foreground">
           {article.category?.name && <>{article.category.name} &middot; </>}
           {article.viewCount} views
         </p>
@@ -69,7 +69,7 @@ export default function KbArticlePage() {
 
       <Card className="mt-8">
         <CardContent className="flex items-center justify-between py-4">
-          <span className="text-sm text-slate-600">Was this helpful?</span>
+          <span className="text-sm text-muted-foreground">Was this helpful?</span>
           <div className="flex gap-3">
             <Button
               variant="outline"

@@ -27,7 +27,7 @@ import { Download } from 'lucide-react';
 const COLORS = ['#3b82f6', '#22c55e', '#ef4444', '#f59e0b'];
 
 export default function AdminReportsPage() {
-  const { t } = useTranslation(['common', 'page']);
+  const { t } = useTranslation();
   const today = new Date().toISOString().slice(0, 10);
   const thirtyDaysAgo = new Date(Date.now() - 30 * 86400000).toISOString().slice(0, 10);
   const [startDate, setStartDate] = useState(thirtyDaysAgo);
@@ -66,10 +66,12 @@ export default function AdminReportsPage() {
   });
 
   const downloadCsv = (type: string) => {
-    window.open(
-      `/api/reports/export?type=${type}&startDate=${startDate}&endDate=${endDate}`,
-      '_blank',
-    );
+    const a = document.createElement('a');
+    a.href = `/api/reports/export?type=${type}&startDate=${startDate}&endDate=${endDate}`;
+    a.download = `${type}-${startDate}-${endDate}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
   };
 
   const slaPieData = sla
@@ -82,7 +84,7 @@ export default function AdminReportsPage() {
   return (
     <AdminLayout>
       <div className="mb-6 flex items-center justify-between">
-        <h2 className="text-xl font-semibold text-slate-900">{t('Reports')}</h2>
+        <h2 className="text-xl font-semibold text-foreground">{t('Reports')}</h2>
         <div className="flex items-center gap-2">
           <Input
             type="date"
@@ -90,7 +92,7 @@ export default function AdminReportsPage() {
             onChange={(e) => setStartDate(e.target.value)}
             className="w-40"
           />
-          <span className="text-sm text-slate-400">{t('to')}</span>
+          <span className="text-sm text-muted-foreground">{t('to')}</span>
           <Input
             type="date"
             value={endDate}
@@ -162,11 +164,15 @@ export default function AdminReportsPage() {
                 </ResponsiveContainer>
                 <div className="mt-2 grid grid-cols-2 gap-2 text-center text-sm">
                   <div className="rounded bg-green-50 p-2">
-                    <p className="font-medium text-green-700">{sla.response.complianceRate}%</p>
+                    <p className="font-medium text-green-700">
+                      {sla.response?.complianceRate ?? 'N/A'}%
+                    </p>
                     <p className="text-xs text-green-600">{t('Response')}</p>
                   </div>
                   <div className="rounded bg-blue-50 p-2">
-                    <p className="font-medium text-blue-700">{sla.resolution.complianceRate}%</p>
+                    <p className="font-medium text-blue-700">
+                      {sla.resolution?.complianceRate ?? 'N/A'}%
+                    </p>
                     <p className="text-xs text-blue-600">{t('Resolution')}</p>
                   </div>
                 </div>
@@ -218,13 +224,13 @@ export default function AdminReportsPage() {
                 )}
                 {csat.recentRatings?.length > 0 && (
                   <div className="mt-2 space-y-1">
-                    <p className="text-xs font-medium text-slate-500">{t('Recent:')}</p>
+                    <p className="text-xs font-medium text-muted-foreground">{t('Recent:')}</p>
                     {csat.recentRatings.slice(0, 3).map((r: any) => (
                       <div
                         key={r.id}
-                        className="flex items-center justify-between rounded bg-slate-50 px-2 py-1 text-xs"
+                        className="flex items-center justify-between rounded bg-background px-2 py-1 text-xs"
                       >
-                        <span className="text-slate-700">{r.ticket.subject.slice(0, 40)}</span>
+                        <span className="text-foreground">{r.ticket.subject.slice(0, 40)}</span>
                         <span className="font-medium text-yellow-600">
                           {'★'.repeat(r.rating)}
                           {'☆'.repeat(5 - r.rating)}
@@ -254,10 +260,10 @@ export default function AdminReportsPage() {
                 {agents.slice(0, 5).map((a: any) => (
                   <div
                     key={a.agentId}
-                    className="flex items-center justify-between rounded-lg bg-slate-50 px-3 py-2 text-sm"
+                    className="flex items-center justify-between rounded-lg bg-background px-3 py-2 text-sm"
                   >
-                    <span className="font-medium text-slate-900">{a.agentName}</span>
-                    <div className="flex gap-3 text-xs text-slate-500">
+                    <span className="font-medium text-foreground">{a.agentName}</span>
+                    <div className="flex gap-3 text-xs text-muted-foreground">
                       <span>
                         {a.resolved}/{a.totalTickets} {t('resolved')}
                       </span>

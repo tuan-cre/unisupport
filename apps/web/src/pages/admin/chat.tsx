@@ -13,7 +13,7 @@ import { Input } from '../../components/ui/input';
 import { Send } from 'lucide-react';
 
 export default function AdminChatPage() {
-  const { t } = useTranslation(['common', 'page']);
+  const { t } = useTranslation();
   const qc = useQueryClient();
   const [detailId, setDetailId] = useState<string | null>(null);
   const [msg, setMsg] = useState('');
@@ -94,7 +94,7 @@ export default function AdminChatPage() {
   return (
     <AdminLayout>
       <div className="mb-4 flex items-center justify-between">
-        <h2 className="text-xl font-semibold text-slate-900">{t('Live Chat')}</h2>
+        <h2 className="text-xl font-semibold text-foreground">{t('Live Chat')}</h2>
       </div>
 
       {isLoading && <Skeleton className="h-64 w-full" />}
@@ -116,13 +116,13 @@ export default function AdminChatPage() {
                 >
                   {c.status}
                 </Badge>
-                <span className="text-sm font-medium text-slate-900">{c.subject}</span>
-                <span className="text-xs text-slate-400">
+                <span className="text-sm font-medium text-foreground">{c.subject}</span>
+                <span className="text-xs text-muted-foreground">
                   {c.user
                     ? `${c.user.firstName} ${c.user.lastName}`
                     : c.visitorName || c.visitorEmail || 'Anonymous'}
                 </span>
-                <span className="ml-auto text-xs text-slate-400">
+                <span className="ml-auto text-xs text-muted-foreground">
                   {c._count?.messages ?? 0} {t('msgs')}
                 </span>
               </div>
@@ -163,7 +163,7 @@ export default function AdminChatPage() {
                     className={`max-w-[80%] rounded-lg px-3 py-2 text-sm ${
                       m.senderType === 'VISITOR'
                         ? 'bg-blue-600 text-white'
-                        : 'bg-slate-100 text-slate-900'
+                        : 'bg-muted text-foreground'
                     }`}
                   >
                     <p className="text-xs opacity-70 mb-0.5">{m.senderName || m.senderType}</p>

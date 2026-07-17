@@ -15,6 +15,7 @@ import {
   DialogTitle,
 } from '../../components/ui/dialog';
 import { Skeleton } from '../../components/ui/skeleton';
+import ConfirmDialog from '../../components/confirm-dialog';
 import { Plus, Pencil, Trash2, Undo2 } from 'lucide-react';
 
 interface Asset {
@@ -72,7 +73,7 @@ const statusColors: Record<string, string> = {
 };
 
 export default function AdminAssetsPage() {
-  const { t } = useTranslation(['common', 'page']);
+  const { t } = useTranslation();
   const qc = useQueryClient();
   const [tab, setTab] = useState<'assets' | 'licenses'>('assets');
   const [showCreate, setShowCreate] = useState(false);
@@ -97,6 +98,7 @@ export default function AdminAssetsPage() {
   });
   const [assignAssetId, setAssignAssetId] = useState('');
   const [assignUserId, setAssignUserId] = useState('');
+  const [deleteId, setDeleteId] = useState<string | null>(null);
 
   const { data: assets, isLoading } = useQuery({
     queryKey: ['admin-assets'],
@@ -176,7 +178,7 @@ export default function AdminAssetsPage() {
     <AdminLayout>
       <div className="mb-4">
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-xl font-semibold text-slate-900">{t('Assets & Inventory')}</h2>
+          <h2 className="text-xl font-semibold text-foreground">{t('Assets & Inventory')}</h2>
           <Dialog open={showCreate} onOpenChange={setShowCreate}>
             <DialogTrigger asChild>
               <Button size="sm">
@@ -195,7 +197,7 @@ export default function AdminAssetsPage() {
                   onChange={(e) => setForm({ ...form, name: e.target.value })}
                 />
                 <select
-                  className="rounded-md border border-slate-200 p-2 text-sm"
+                  className="rounded-md border border-border p-2 text-sm"
                   value={form.type}
                   onChange={(e) => setForm({ ...form, type: e.target.value })}
                 >
@@ -284,10 +286,10 @@ export default function AdminAssetsPage() {
                   <div className="min-w-0 flex-1">
                     <div className="mb-1 flex items-center gap-2">
                       <Badge className={statusColors[a.status]}>{a.status}</Badge>
-                      <span className="text-sm font-medium text-slate-900">{a.name}</span>
-                      <span className="text-xs text-slate-400">({a.type})</span>
+                      <span className="text-sm font-medium text-foreground">{a.name}</span>
+                      <span className="text-xs text-muted-foreground">({a.type})</span>
                     </div>
-                    <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-500">
+                    <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
                       {a.serialNumber && <span>S/N: {a.serialNumber}</span>}
                       {a.model && (
                         <span>
@@ -326,7 +328,7 @@ export default function AdminAssetsPage() {
                     <Button variant="ghost" size="sm" onClick={() => setEditing(a)}>
                       <Pencil className="h-3 w-3" />
                     </Button>
-                    <Button variant="ghost" size="sm" onClick={() => remove.mutate(a.id)}>
+                    <Button variant="ghost" size="sm" onClick={() => setDeleteId(a.id)}>
                       <Trash2 className="h-3 w-3 text-red-500" />
                     </Button>
                   </div>
@@ -405,8 +407,8 @@ export default function AdminAssetsPage() {
                   <CardContent className="p-3 text-sm">
                     <div className="flex items-center justify-between">
                       <div>
-                        <span className="font-medium text-slate-900">{l.name}</span>
-                        <span className="ml-2 text-xs text-slate-400">{l.vendor}</span>
+                        <span className="font-medium text-foreground">{l.name}</span>
+                        <span className="ml-2 text-xs text-muted-foreground">{l.vendor}</span>
                       </div>
                       <Badge
                         className={
@@ -419,7 +421,7 @@ export default function AdminAssetsPage() {
                       </Badge>
                     </div>
                     {l.expirationDate && (
-                      <p className="mt-1 text-xs text-slate-500">
+                      <p className="mt-1 text-xs text-muted-foreground">
                         {t('Expires')}: {l.expirationDate.slice(0, 10)}
                       </p>
                     )}
@@ -474,6 +476,14 @@ export default function AdminAssetsPage() {
           )}
         </DialogContent>
       </Dialog>
+
+      <ConfirmDialog
+        open={!!deleteId}
+        onOpenChange={() => setDeleteId(null)}
+        onConfirm={() => (deleteId ? remove.mutate(deleteId) : Promise.resolve())}
+        title={t('Delete?')}
+        confirmLabel={t('Delete')}
+      />
     </AdminLayout>
   );
 }

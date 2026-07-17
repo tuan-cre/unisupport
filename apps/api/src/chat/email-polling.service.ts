@@ -100,12 +100,13 @@ export class EmailPollingService implements OnModuleInit, OnModuleDestroy {
       this.client = client;
       await client.connect();
 
-      this.client.on('error', (error) => {
+      client.on('error', (error) => {
         this.logger.warn(
           { err: error?.message, stack: error?.stack },
           'IMAP connection dropped, will retry',
         );
         if (!this.closing) {
+          this.closeClient();
           this.scheduleReconnect();
         }
       });
@@ -113,9 +114,12 @@ export class EmailPollingService implements OnModuleInit, OnModuleDestroy {
       await this.poll();
       const interval = this.config.get<number>('IMAP_POLL_INTERVAL_MS') ?? 60000;
       this.pollTimer = setInterval(() => this.poll(), interval);
-    } catch {
-      this.logger.warn(`IMAP polling connect failed (attempt ${attempt}/${maxAttempts})`);
-      this.client = null;
+    } catch (err) {
+      this.logger.warn(
+        { err: err instanceof Error ? err.message : err },
+        `IMAP polling connect failed (attempt ${attempt}/${maxAttempts})`,
+      );
+      this.closeClient();
       if (!this.closing && attempt < maxAttempts) {
         await new Promise((resolve) => setTimeout(resolve, 3000 * attempt));
         return this.bootstrapImap(attempt + 1);
@@ -128,16 +132,20 @@ export class EmailPollingService implements OnModuleInit, OnModuleDestroy {
     this.pollTimer = setTimeout(() => this.bootstrapImap(), 3000);
   }
 
+  private async closeClient() {
+    if (!this.client) return;
+    try {
+      await this.client.close();
+    } catch {
+      // ignore close errors
+    }
+    this.client = null;
+  }
+
   async onModuleDestroy() {
     this.closing = true;
     if (this.pollTimer) clearInterval(this.pollTimer);
-    if (this.client) {
-      try {
-        await this.client.close();
-      } catch {
-        // ignore close errors
-      }
-    }
+    await this.closeClient();
   }
 
   private async poll() {
@@ -147,7 +155,7 @@ export class EmailPollingService implements OnModuleInit, OnModuleDestroy {
       const lock = await this.client.getMailboxLock(mailbox);
       try {
         for await (const message of this.client.fetch(
-          { since: new Date(Date.now() - 1000 * 60 * 5) } as SearchObject,
+          { since: new Date(Date.now() - 1000 * 60 * 5), unseen: true } as SearchObject,
           { uid: true, source: true, envelope: true, flags: true },
         )) {
           if (this.closing) break;
@@ -175,15 +183,21 @@ export class EmailPollingService implements OnModuleInit, OnModuleDestroy {
             const result = await this.chatService.processInboundEmail(dto);
             await this.client.messageFlagsSet(message.uid, ['\\Seen']);
             this.eventsGateway.emitChatNotification({ subject, from, result } as any);
-          } catch {
-            // skip per-message errors
+          } catch (e) {
+            this.logger.warn(
+              { err: e instanceof Error ? e.message : e },
+              'IMAP per-message error in email polling',
+            );
           }
         }
       } finally {
         lock.release();
       }
-    } catch {
-      // connection/mailbox errors surface in app logs
+    } catch (e) {
+      this.logger.warn(
+        { err: e instanceof Error ? e.message : e },
+        'IMAP mailbox fetch error in email polling',
+      );
     }
   }
 

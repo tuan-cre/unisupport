@@ -1,4 +1,9 @@
-import { Injectable, NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ForbiddenException,
+  BadRequestException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { SlasService } from '../slas/slas.service';
@@ -175,9 +180,10 @@ export class TicketsService {
       throw new ForbiddenException('Access denied');
     }
 
-    const comments = userRole !== 'admin' && userRole !== 'agent'
-      ? ticket.comments.filter((c) => !c.isInternal)
-      : ticket.comments;
+    const comments =
+      userRole !== 'admin' && userRole !== 'agent'
+        ? ticket.comments.filter((c) => !c.isInternal)
+        : ticket.comments;
 
     const myRating = await this.prisma.ticketRating.findUnique({
       where: { ticketId_userId: { ticketId: id, userId } },
@@ -224,9 +230,16 @@ export class TicketsService {
 
     const updateData: any = { ...dto };
     if (dto.tagIds !== undefined) {
+      const currentTags = await this.prisma.ticketTag.findMany({
+        where: { ticketId: id },
+        select: { tagId: true },
+      });
+      const currentIds = currentTags.map((t) => t.tagId);
+      const toRemove = currentIds.filter((tid) => !dto.tagIds!.includes(tid));
+      const toAdd = dto.tagIds.filter((tid) => !currentIds.includes(tid));
       updateData.tags = {
-        deleteMany: {},
-        create: dto.tagIds.map((tagId) => ({ tagId })),
+        deleteMany: { tagId: { in: toRemove } },
+        create: toAdd.map((tagId) => ({ tagId })),
       };
       delete updateData.tagIds;
     }
@@ -435,7 +448,8 @@ export class TicketsService {
   // Bulk operations
   async bulkUpdate(dto: BulkUpdateDto, userId: string, userRole: string | null) {
     const isAdminOrAgent = userRole === 'admin' || userRole === 'agent';
-    if (!isAdminOrAgent) throw new ForbiddenException('Only admins and agents can bulk update tickets');
+    if (!isAdminOrAgent)
+      throw new ForbiddenException('Only admins and agents can bulk update tickets');
 
     const data: any = {};
     if (dto.status) data.status = dto.status;

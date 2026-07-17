@@ -100,6 +100,6 @@ describe('KbController (integration)', () => {
       .post('/api/kb/admin/articles')
       .set('Authorization', `Bearer ${token}`)
       .send({ content: 'No title provided - should be rejected.' })
-      .expect((r) => expect([400, 401, 403]).toContain(r.status));
+      .expect((r: any) => expect([400, 401, 403]).toContain(r.status));
   });
 });

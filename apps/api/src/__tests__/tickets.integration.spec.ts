@@ -63,7 +63,7 @@ describe('TicketsController (integration)', () => {
       .post('/api/tickets')
       .set('Authorization', `Bearer ${token}`)
       .send({ subject: 'Laptop issue', description: 'My laptop needs fixing now.' })
-      .expect((r) => expect([200, 201]).toContain(r.status));
+      .expect((r: any) => expect([200, 201]).toContain(r.status));
 
     // Verify ticket created in DB
     const dbTicket = await prisma.ticket.findFirst({
@@ -78,7 +78,7 @@ describe('TicketsController (integration)', () => {
       .post('/api/tickets')
       .set('Authorization', `Bearer ${token}`)
       .send({ subject: 'Nice' })
-      .expect((r) => expect([200, 400]).toContain(r.status));
+      .expect((r: any) => expect([200, 400]).toContain(r.status));
   });
 
   it('4. GET /api/tickets/:id returns 404 for non-existent', async () => {
@@ -94,7 +94,7 @@ describe('TicketsController (integration)', () => {
       .post('/api/tickets/ticket-1/comments')
       .set('Authorization', `Bearer ${token}`)
       .send({ content: 'Some comment' })
-      .expect((r) => expect([200, 201]).toContain(r.status));
+      .expect((r: any) => expect([200, 201]).toContain(r.status));
 
     // Verify comment created in DB
     const comment = await prisma.comment.findFirst({
@@ -108,7 +108,7 @@ describe('TicketsController (integration)', () => {
       .patch('/api/tickets/ticket-1')
       .set('Authorization', `Bearer ${adminToken}`)
       .send({ status: 'IN_PROGRESS' })
-      .expect((r) => expect([200, 201]).toContain(r.status));
+      .expect((r: any) => expect([200, 201]).toContain(r.status));
 
     const ticket = await prisma.ticket.findUnique({ where: { id: 'ticket-1' } });
     expect(ticket?.status).toBe('IN_PROGRESS');

@@ -1,4 +1,4 @@
-import { useTranslation, Trans } from 'react-i18next';
+import { useTranslation } from 'react-i18next';
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../../lib/api';
@@ -64,7 +64,7 @@ function UserEditDialog({
 }) {
   const queryClient = useQueryClient();
   const { toast } = useToast();
-  const { t } = useTranslation(['common', 'page']);
+  const { t } = useTranslation();
   const [roleId, setRoleId] = useState(user.role?.id ?? '');
   const [departmentId, setDepartmentId] = useState(user.department?.id ?? '');
   const [status, setStatus] = useState(user.status);
@@ -172,7 +172,7 @@ function UserEditDialog({
 }
 
 export default function AdminUsersPage() {
-  const { t, ready } = useTranslation(['common', 'page']);
+  const { t, ready } = useTranslation();
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
   const [editingUser, setEditingUser] = useState<User | null>(null);
@@ -230,7 +230,7 @@ export default function AdminUsersPage() {
   return (
     <AdminLayout>
       <div className="mb-6 flex items-center justify-between">
-        <h2 className="text-xl font-semibold text-slate-900">{t('Users')}</h2>
+        <h2 className="text-xl font-semibold text-foreground">{t('Users')}</h2>
         <Dialog open={showCreate} onOpenChange={setShowCreate}>
           <DialogTrigger asChild>
             <Button size="sm">
@@ -314,11 +314,13 @@ export default function AdminUsersPage() {
         </div>
       )}
 
-      {data && data.users.length === 0 && <p className="text-slate-500">{t('No users found.')}</p>}
+      {data && data.users.length === 0 && (
+        <p className="text-muted-foreground">{t('No users found.')}</p>
+      )}
 
       {data && data.users.length > 0 && (
         <>
-          <div className="overflow-hidden rounded-xl border bg-white">
+          <div className="overflow-hidden rounded-xl border bg-card">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -333,15 +335,15 @@ export default function AdminUsersPage() {
               <TableBody>
                 {data.users.map((u) => (
                   <TableRow key={u.id}>
-                    <TableCell className="font-medium text-slate-900">
+                    <TableCell className="font-medium text-foreground">
                       {u.firstName} {u.lastName}
                     </TableCell>
-                    <TableCell className="text-slate-600">{u.email}</TableCell>
+                    <TableCell className="text-muted-foreground">{u.email}</TableCell>
                     <TableCell>
-                      {u.role?.name ?? <span className="text-slate-400">&mdash;</span>}
+                      {u.role?.name ?? <span className="text-muted-foreground">&mdash;</span>}
                     </TableCell>
                     <TableCell>
-                      {u.department?.name ?? <span className="text-slate-400">&mdash;</span>}
+                      {u.department?.name ?? <span className="text-muted-foreground">&mdash;</span>}
                     </TableCell>
                     <TableCell>
                       <Badge variant={u.status === 'ACTIVE' ? 'default' : 'secondary'}>
@@ -359,7 +361,7 @@ export default function AdminUsersPage() {
             </Table>
           </div>
 
-          <div className="mt-4 flex items-center justify-between text-sm text-slate-500">
+          <div className="mt-4 flex items-center justify-between text-sm text-muted-foreground">
             <span>
               {t('Page')} {data?.meta?.page} {t('of')} {data?.meta?.totalPages} ({data?.meta?.total}{' '}
               {t('users')})

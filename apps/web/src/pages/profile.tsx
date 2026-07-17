@@ -12,7 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../components/
 import api from '../lib/api';
 
 export default function ProfilePage() {
-  const { t } = useTranslation(['common', 'auth', 'page']);
+  const { t } = useTranslation();
   const { user, refreshUser } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -41,7 +41,7 @@ export default function ProfilePage() {
   return (
     <AppLayout>
       <div className="mx-auto max-w-lg">
-        <h2 className="mb-6 text-xl font-semibold text-slate-900">{t('page.profile')}</h2>
+        <h2 className="mb-6 text-xl font-semibold text-foreground">{t('page.profile')}</h2>
 
         <Card>
           <CardHeader>
@@ -73,16 +73,16 @@ export default function ProfilePage() {
 
         <Card className="mt-6">
           <CardHeader>
-            <CardTitle>{t('page.profile')}</CardTitle>
+            <CardTitle>{t('auth.mfaTitle')}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             <p className="text-sm text-muted-foreground">
               {t('common.statusLabel')}:{' '}
-              <span className="font-medium text-slate-900">{user?.status}</span>
+              <span className="font-medium text-foreground">{user?.status}</span>
             </p>
             <p className="text-sm text-muted-foreground">
               {t('common.roleLabel')}:{' '}
-              <span className="font-medium text-slate-900">{user?.role?.name ?? 'None'}</span>
+              <span className="font-medium text-foreground">{user?.role?.name ?? 'None'}</span>
             </p>
             <p className="text-sm text-muted-foreground">
               {t('auth.emailVerified')}:{' '}
@@ -150,9 +150,8 @@ export default function ProfilePage() {
           </DialogHeader>
           <div className="space-y-4 pt-2 text-center">
             {mfaQr && <img src={mfaQr} alt="QR Code" className="mx-auto h-48 w-48" />}
-            <p className="text-xs text-slate-500">
-              {t('auth.orEnterManually')}{' '}
-              <code className="rounded bg-slate-100 px-1">{mfaSecret}</code>
+            <p className="text-xs text-muted-foreground">
+              {t('auth.orEnterManually')} <code className="rounded bg-muted px-1">{mfaSecret}</code>
             </p>
             <Input
               value={mfaCode}

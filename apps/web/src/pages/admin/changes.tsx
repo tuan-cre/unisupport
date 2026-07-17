@@ -49,7 +49,7 @@ const statusColors: Record<string, string> = {
 };
 
 export default function AdminChangesPage() {
-  const { t } = useTranslation(['common', 'page']);
+  const { t } = useTranslation();
   const qc = useQueryClient();
   const [showCreate, setShowCreate] = useState(false);
   const [detail, setDetail] = useState<Change | null>(null);
@@ -113,7 +113,7 @@ export default function AdminChangesPage() {
   return (
     <AdminLayout>
       <div className="mb-4 flex items-center justify-between">
-        <h2 className="text-xl font-semibold text-slate-900">{t('Change Requests')}</h2>
+        <h2 className="text-xl font-semibold text-foreground">{t('Change Requests')}</h2>
         <Dialog open={showCreate} onOpenChange={setShowCreate}>
           <DialogTrigger asChild>
             <Button size="sm">
@@ -132,17 +132,23 @@ export default function AdminChangesPage() {
                 onChange={(e) => setForm({ ...form, subject: e.target.value })}
               />
               <textarea
-                className="rounded-md border border-slate-200 p-2 text-sm"
+                className="rounded-md border border-border p-2 text-sm"
                 rows={3}
                 placeholder={t('Description')}
                 value={form.description}
                 onChange={(e) => setForm({ ...form, description: e.target.value })}
               />
-              <Input
-                placeholder={t('Risk level (low/medium/high/critical)')}
+              <select
+                className="rounded-md border border-border p-2 text-sm"
                 value={form.riskLevel}
                 onChange={(e) => setForm({ ...form, riskLevel: e.target.value })}
-              />
+              >
+                <option value="">{t('Risk level (low/medium/high/critical)')}</option>
+                <option value="low">{t('Low')}</option>
+                <option value="medium">{t('Medium')}</option>
+                <option value="high">{t('High')}</option>
+                <option value="critical">{t('Urgent')}</option>
+              </select>
               <Input
                 type="date"
                 placeholder={t('Planned start')}
@@ -170,10 +176,10 @@ export default function AdminChangesPage() {
             <CardContent className="p-4">
               <div className="mb-1 flex items-center gap-2">
                 <Badge className={statusColors[c.status]}>{c.status}</Badge>
-                <span className="text-sm font-medium text-slate-900">{c.subject}</span>
+                <span className="text-sm font-medium text-foreground">{c.subject}</span>
               </div>
-              <p className="text-xs text-slate-500 line-clamp-1">{c.description}</p>
-              <div className="mt-1 flex gap-3 text-xs text-slate-400">
+              <p className="text-xs text-muted-foreground line-clamp-1">{c.description}</p>
+              <div className="mt-1 flex gap-3 text-xs text-muted-foreground">
                 {c.riskLevel && (
                   <span>
                     {t('Risk')}: {c.riskLevel}
@@ -203,8 +209,8 @@ export default function AdminChangesPage() {
           </DialogHeader>
           {detail && (
             <div className="flex flex-col gap-4 max-h-[70vh] overflow-y-auto">
-              <p className="text-sm text-slate-600">{detail.description}</p>
-              <div className="flex flex-wrap gap-2 text-xs text-slate-500">
+              <p className="text-sm text-muted-foreground">{detail.description}</p>
+              <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
                 <Badge className={statusColors[detail.status]}>{detail.status}</Badge>
                 <span>
                   {t('Risk')}: {detail.riskLevel || 'N/A'}
@@ -218,7 +224,7 @@ export default function AdminChangesPage() {
               </div>
 
               <div>
-                <h4 className="mb-2 text-sm font-semibold text-slate-900">
+                <h4 className="mb-2 text-sm font-semibold text-foreground">
                   {t('Approvals')} ({detail.approvals?.length || 0})
                 </h4>
                 {detail.approvals?.map((a: ChangeApproval) => (
@@ -241,7 +247,7 @@ export default function AdminChangesPage() {
                         {a.status}
                       </Badge>
                     </div>
-                    {a.comment && <p className="mt-1 text-xs text-slate-500">{a.comment}</p>}
+                    {a.comment && <p className="mt-1 text-xs text-muted-foreground">{a.comment}</p>}
                     {a.status === 'PENDING' && (
                       <div className="mt-2 flex gap-2">
                         <Input

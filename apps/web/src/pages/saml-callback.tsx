@@ -6,9 +6,9 @@ export default function SamlCallbackPage() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const [error, setError] = useState('');
+  const token = searchParams.get('token');
 
   useEffect(() => {
-    const token = searchParams.get('token');
     if (!token) {
       setError('No SAML token provided');
       return;
@@ -25,11 +25,11 @@ export default function SamlCallbackPage() {
       .catch((err) => {
         setError(err.response?.data?.message || 'SAML login failed');
       });
-  }, [searchParams, navigate]);
+  }, [token, navigate]);
 
   if (error) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-gradient-to-b from-white via-blue-50 to-blue-100 p-8">
+      <main className="flex min-h-screen items-center justify-center bg-gradient-to-b from-background via-background to-background dark:from-background dark:via-background dark:to-background p-8">
         <div className="w-full max-w-sm text-center">
           <p className="text-lg font-semibold text-red-600">{error}</p>
           <button
@@ -44,9 +44,9 @@ export default function SamlCallbackPage() {
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-gradient-to-b from-white via-blue-50 to-blue-100 p-8">
+    <main className="flex min-h-screen items-center justify-center bg-gradient-to-b from-background via-background to-background dark:from-background dark:via-background dark:to-background p-8">
       <div className="w-full max-w-sm text-center">
-        <p className="text-lg text-slate-600">Completing SAML login...</p>
+        <p className="text-lg text-muted-foreground">Completing SAML login...</p>
       </div>
     </main>
   );

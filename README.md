@@ -63,5 +63,5 @@ Admin login: `admin@unisupport.local` / `admin123`
 
 ## Docs
 
-- [`PROJECTS.md`](./PROJECTS.md) — full project reference (tree, API, schema, routing)
-- [`ROADMAP.md`](./ROADMAP.md) — phased implementation plan (all 17 phases complete)
+- [`AGENTS.md`](./AGENTS.md) — agent guide (conventions, patterns, pitfalls)
+- [`ROADMAP.md`](./ROADMAP.md) — phased implementation plan (23 phases + bug bash)

@@ -1,4 +1,4 @@
-import { Trans, useTranslation } from 'react-i18next';
+import { useTranslation } from 'react-i18next';
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../../lib/api';
@@ -28,8 +28,9 @@ interface KnownError {
 }
 
 export default function AdminKnownErrorsPage() {
-  const { t } = useTranslation(['common', 'page']);
+  const { t } = useTranslation();
   const qc = useQueryClient();
+  const [page, setPage] = useState(1);
   const [editing, setEditing] = useState<KnownError | null>(null);
   const [showCreate, setShowCreate] = useState(false);
   const [form, setForm] = useState({
@@ -42,10 +43,10 @@ export default function AdminKnownErrorsPage() {
   });
 
   const { data, isLoading } = useQuery({
-    queryKey: ['admin-known-errors'],
+    queryKey: ['admin-known-errors', page],
     queryFn: async () => {
-      const r = await api.get('/known-errors');
-      return r.data.data as KnownError[];
+      const r = await api.get('/known-errors', { params: { page, limit: 20 } });
+      return { items: r.data.data as KnownError[], meta: r.data.meta };
     },
   });
 
@@ -97,7 +98,7 @@ export default function AdminKnownErrorsPage() {
   return (
     <AdminLayout>
       <div className="mb-4 flex items-center justify-between">
-        <h2 className="text-xl font-semibold text-slate-900">{t('Known Errors')}</h2>
+        <h2 className="text-xl font-semibold text-foreground">{t('Known Errors')}</h2>
         <Dialog open={showCreate} onOpenChange={setShowCreate}>
           <DialogTrigger asChild>
             <Button size="sm">
@@ -116,7 +117,7 @@ export default function AdminKnownErrorsPage() {
                 onChange={(e) => setForm({ ...form, subject: e.target.value })}
               />
               <textarea
-                className="rounded-md border border-slate-200 p-2 text-sm"
+                className="rounded-md border border-border p-2 text-sm"
                 rows={3}
                 placeholder={t('Description')}
                 value={form.description}
@@ -151,7 +152,7 @@ export default function AdminKnownErrorsPage() {
       </div>
 
       {isLoading && <Skeleton className="h-64 w-full" />}
-      {data && data.length === 0 && (
+      {data && data.items.length === 0 && (
         <EmptyState
           title={t('No known errors')}
           message={t('Known errors appear here when logged.')}
@@ -162,15 +163,17 @@ export default function AdminKnownErrorsPage() {
           }
         />
       )}
-      {data?.map((ke: KnownError) => (
+      {data?.items?.map((ke: KnownError) => (
         <Card key={ke.id} className="mb-2">
           <CardContent className="flex items-start justify-between p-4">
             <div className="min-w-0 flex-1">
               <div className="mb-1 flex items-center gap-2">
-                <span className="text-sm font-medium text-slate-900">{ke.subject}</span>
-                {ke.severity && <span className="text-xs text-slate-400">({ke.severity})</span>}
+                <span className="text-sm font-medium text-foreground">{ke.subject}</span>
+                {ke.severity && (
+                  <span className="text-xs text-muted-foreground">({ke.severity})</span>
+                )}
               </div>
-              <p className="text-xs text-slate-500 line-clamp-1">{ke.description}</p>
+              <p className="text-xs text-muted-foreground line-clamp-1">{ke.description}</p>
               {ke.workaround && (
                 <p className="text-xs text-blue-600">
                   {t('Workaround')}: {ke.workaround}
@@ -189,6 +192,30 @@ export default function AdminKnownErrorsPage() {
         </Card>
       ))}
 
+      <div className="mt-4 flex items-center justify-between">
+        <p className="text-sm text-muted-foreground">
+          {t('Page')} {page} / {data?.meta?.totalPages ?? 1}
+        </p>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={page <= 1}
+            onClick={() => setPage((p) => p - 1)}
+          >
+            {t('Previous')}
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={page >= (data?.meta?.totalPages ?? 1)}
+            onClick={() => setPage((p) => p + 1)}
+          >
+            {t('Next')}
+          </Button>
+        </div>
+      </div>
+
       <Dialog
         open={!!editing}
         onOpenChange={(v) => {
@@ -206,7 +233,7 @@ export default function AdminKnownErrorsPage() {
                 onChange={(e) => setEditing({ ...editing, subject: e.target.value })}
               />
               <textarea
-                className="rounded-md border border-slate-200 p-2 text-sm"
+                className="rounded-md border border-border p-2 text-sm"
                 rows={3}
                 defaultValue={editing.description}
                 onChange={(e) => setEditing({ ...editing, description: e.target.value })}

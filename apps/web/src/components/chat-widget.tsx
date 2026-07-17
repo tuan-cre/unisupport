@@ -112,7 +112,7 @@ export default function ChatWidget() {
   }
 
   return (
-    <div className="fixed bottom-6 right-6 z-50 flex w-80 flex-col rounded-xl border bg-white shadow-2xl">
+    <div className="fixed bottom-6 right-6 z-50 flex w-80 flex-col rounded-xl border bg-card shadow-2xl">
       <div className="flex items-center justify-between rounded-t-xl bg-blue-600 px-4 py-3 text-white">
         <span className="text-sm font-semibold">Live Chat</span>
         <button
@@ -129,7 +129,9 @@ export default function ChatWidget() {
       <div className="flex h-72 flex-col gap-2 overflow-y-auto p-3">
         {!started ? (
           <div className="flex flex-col gap-2 p-2">
-            <p className="text-sm text-slate-600">Start a conversation with our support team.</p>
+            <p className="text-sm text-muted-foreground">
+              Start a conversation with our support team.
+            </p>
             {error && <p className="text-xs text-red-500">{error}</p>}
             <Input
               placeholder="Your name"
@@ -158,7 +160,7 @@ export default function ChatWidget() {
                   className={`max-w-[80%] rounded-lg px-3 py-2 text-sm ${
                     m.senderType === 'VISITOR'
                       ? 'bg-blue-600 text-white'
-                      : 'bg-slate-100 text-slate-900'
+                      : 'bg-muted text-foreground'
                   }`}
                 >
                   {m.content}

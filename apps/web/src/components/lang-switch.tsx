@@ -14,7 +14,7 @@ const LANGUAGES = [
 ];
 
 export function LangSwitch() {
-  const { i18n, t } = useTranslation('common');
+  const { i18n, t } = useTranslation();
 
   const current = LANGUAGES.find((lang) => lang.code === i18n.language) ?? LANGUAGES[0];
 
@@ -30,7 +30,7 @@ export function LangSwitch() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon" className="h-9 w-9" aria-label={t('common.loading')}>
+        <Button variant="ghost" size="icon" className="h-9 w-9" aria-label="Switch language">
           <Globe className="h-[1.1rem] w-[1.1rem]" />
           <span className="ml-1 text-xs">{current.flag}</span>
         </Button>

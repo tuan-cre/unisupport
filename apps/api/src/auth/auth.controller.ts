@@ -22,6 +22,10 @@ import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
+import { VerifyMfaDto } from './dto/verify-mfa.dto';
+import { TokenOnlyDto } from './dto/token-only.dto';
+import { VerifyMfaSetupDto } from './dto/verify-mfa-setup.dto';
+import { RefreshTokenDto } from './dto/refresh-token.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { Request, Response } from 'express';
@@ -54,16 +58,16 @@ export class AuthController {
   @ApiOperation({ summary: 'Complete MFA login with 2FA code' })
   @HttpCode(HttpStatus.OK)
   @Post('mfa')
-  async verifyMfa(@Body('mfaToken') mfaToken: string, @Body('code') code: string) {
-    const result = await this.auth.verifyMfa(mfaToken, code);
+  async verifyMfa(@Body() dto: VerifyMfaDto) {
+    const result = await this.auth.verifyMfa(dto.mfaToken, dto.code);
     return { success: true, message: 'MFA verified', data: result };
   }
 
   @ApiOperation({ summary: 'Verify email with token' })
   @HttpCode(HttpStatus.OK)
   @Post('verify-email')
-  async verifyEmail(@Body('token') token: string) {
-    const result = await this.auth.verifyEmail(token);
+  async verifyEmail(@Body() dto: TokenOnlyDto) {
+    const result = await this.auth.verifyEmail(dto.token);
     return { success: true, ...result };
   }
 
@@ -90,8 +94,8 @@ export class AuthController {
   @ApiOperation({ summary: 'Verify MFA setup with code' })
   @UseGuards(JwtAuthGuard)
   @Post('mfa/verify-setup')
-  async verifyMfaSetup(@Req() req: Request, @Body('code') code: string) {
-    const result = await this.auth.verifyMfaSetup(req.user!.id, code);
+  async verifyMfaSetup(@Req() req: Request, @Body() dto: VerifyMfaSetupDto) {
+    const result = await this.auth.verifyMfaSetup(req.user!.id, dto.code);
     return { success: true, ...result };
   }
 
@@ -107,8 +111,8 @@ export class AuthController {
   @ApiOperation({ summary: 'Refresh access token' })
   @HttpCode(HttpStatus.OK)
   @Post('refresh')
-  async refresh(@Body('refreshToken') refreshToken: string) {
-    const result = await this.auth.refresh(refreshToken);
+  async refresh(@Body() dto: RefreshTokenDto) {
+    const result = await this.auth.refresh(dto.refreshToken);
     return { success: true, message: 'Token refreshed', data: result };
   }
 
@@ -117,8 +121,8 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.OK)
   @Post('logout')
-  async logout(@Req() req: Request, @Body('refreshToken') refreshToken: string) {
-    await this.auth.logout(req.user!.id, refreshToken);
+  async logout(@Req() req: Request, @Body() dto: RefreshTokenDto) {
+    await this.auth.logout(req.user!.id, dto.refreshToken);
     return { success: true, message: 'Logged out' };
   }
 
@@ -203,7 +207,12 @@ export class AuthController {
   @Post('saml/callback')
   @UseGuards(AuthGuard('saml'))
   async samlCallback(@Req() req: Request, @Res() res: Response) {
-    const profile = req.user as unknown as { nameID: string; email: string; firstName: string; lastName: string };
+    const profile = req.user as unknown as {
+      nameID: string;
+      email: string;
+      firstName: string;
+      lastName: string;
+    };
     const { user } = await this.auth.handleSamlLogin(profile);
     const samlToken = this.auth.signSamlToken(user.id);
     const webOrigin = this.config.getOrThrow<string>('WEB_ORIGIN');
@@ -213,16 +222,14 @@ export class AuthController {
   @ApiOperation({ summary: 'Exchange SAML token for JWT tokens' })
   @HttpCode(HttpStatus.OK)
   @Post('saml/exchange')
-  async exchangeSamlToken(@Body('token') token: string) {
-    const result = await this.auth.exchangeSamlToken(token);
+  async exchangeSamlToken(@Body() dto: TokenOnlyDto) {
+    const result = await this.auth.exchangeSamlToken(dto.token);
     return { success: true, message: 'SAML login successful', data: result };
   }
 
   @ApiOperation({ summary: 'Get SAML SP metadata XML' })
   @Get('saml/metadata')
   async samlMetadata(@Req() req: Request, @Res() res: Response) {
-    const { SamlStrategy } = require('./strategies/saml.strategy');
-    // metadata generation requires the strategy instance
     res.status(501).json({ message: 'Metadata endpoint requires SAML to be configured' });
   }
 }

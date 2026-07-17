@@ -19,7 +19,7 @@ import {
 import { Clock } from 'lucide-react';
 
 export default function AdminSlasPage() {
-  const { t } = useTranslation(['common', 'page']);
+  const { t } = useTranslation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [showForm, setShowForm] = useState(false);
@@ -105,7 +105,7 @@ export default function AdminSlasPage() {
   return (
     <AdminLayout>
       <div className="mb-6 flex items-center justify-between">
-        <h2 className="text-xl font-semibold text-slate-900">{t('SLA Policies')}</h2>
+        <h2 className="text-xl font-semibold text-foreground">{t('SLA Policies')}</h2>
         <Button onClick={resetForm}>{t('Create SLA')}</Button>
       </div>
 
@@ -117,16 +117,18 @@ export default function AdminSlasPage() {
         </div>
       )}
 
-      {slas && slas.length === 0 && <p className="text-slate-500">{t('No SLA policies yet.')}</p>}
+      {slas && slas.length === 0 && (
+        <p className="text-muted-foreground">{t('No SLA policies yet.')}</p>
+      )}
 
       {slas && slas.length > 0 && (
         <div className="space-y-3">
           {slas.map((s: any) => (
-            <div key={s.id} className="rounded-xl border bg-white p-4">
+            <div key={s.id} className="rounded-xl border bg-card p-4">
               <div className="flex items-center justify-between">
                 <div className="flex-1">
                   <div className="flex items-center gap-2">
-                    <h3 className="font-medium text-slate-900">{s.name}</h3>
+                    <h3 className="font-medium text-foreground">{s.name}</h3>
                     {s.isDefault && <Badge>{t('Default')}</Badge>}
                     <span
                       className={`rounded px-2 py-0.5 text-xs font-medium ${priorityColors[s.priority] || ''}`}
@@ -135,9 +137,9 @@ export default function AdminSlasPage() {
                     </span>
                   </div>
                   {s.description && (
-                    <p className="mt-0.5 text-xs text-slate-500">{s.description}</p>
+                    <p className="mt-0.5 text-xs text-muted-foreground">{s.description}</p>
                   )}
-                  <div className="mt-1.5 flex items-center gap-4 text-xs text-slate-600">
+                  <div className="mt-1.5 flex items-center gap-4 text-xs text-muted-foreground">
                     <span className="flex items-center gap-1">
                       <Clock className="h-3 w-3" />
                       {t('Response:')} {s.responseTime}m
@@ -232,7 +234,7 @@ export default function AdminSlasPage() {
                   type="checkbox"
                   checked={isDefault}
                   onChange={(e) => setIsDefault(e.target.checked)}
-                  className="h-4 w-4 rounded border-slate-300"
+                  className="h-4 w-4 rounded border-border"
                 />
                 {t('Default SLA (applied to new tickets without priority match)')}
               </label>

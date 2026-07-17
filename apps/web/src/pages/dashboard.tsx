@@ -68,7 +68,7 @@ const statusBadge: Record<string, string> = {
 };
 
 export default function DashboardPage() {
-  const { t } = useTranslation(['common', 'ticket', 'page']);
+  const { t } = useTranslation();
   const { user } = useAuth();
   const isAgent = user?.role?.name === 'agent';
   const isAdmin = user?.role?.name === 'admin';
@@ -84,7 +84,7 @@ export default function DashboardPage() {
   return (
     <AppLayout>
       <div className="mb-6 flex items-center justify-between">
-        <h2 className="text-xl font-semibold text-slate-900">
+        <h2 className="text-xl font-semibold text-foreground">
           {t('common.welcome', { name: user?.firstName })}
         </h2>
       </div>
@@ -106,7 +106,7 @@ export default function DashboardPage() {
                 <Ticket className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <p className="text-2xl font-bold text-slate-900">{stats?.totalTickets ?? 0}</p>
+                <p className="text-2xl font-bold text-foreground">{stats?.totalTickets ?? 0}</p>
               </CardContent>
             </Card>
 
@@ -119,7 +119,7 @@ export default function DashboardPage() {
                   <UserCheck className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <p className="text-2xl font-bold text-slate-900">{stats?.myAssigned ?? 0}</p>
+                  <p className="text-2xl font-bold text-foreground">{stats?.myAssigned ?? 0}</p>
                 </CardContent>
               </Card>
             )}
@@ -134,7 +134,7 @@ export default function DashboardPage() {
                     <Users className="h-4 w-4 text-muted-foreground" />
                   </CardHeader>
                   <CardContent>
-                    <p className="text-2xl font-bold text-slate-900">{stats?.totalUsers ?? 0}</p>
+                    <p className="text-2xl font-bold text-foreground">{stats?.totalUsers ?? 0}</p>
                   </CardContent>
                 </Card>
                 <Card>
@@ -145,7 +145,7 @@ export default function DashboardPage() {
                     <UserCheck className="h-4 w-4 text-muted-foreground" />
                   </CardHeader>
                   <CardContent>
-                    <p className="text-2xl font-bold text-slate-900">{stats?.totalAgents ?? 0}</p>
+                    <p className="text-2xl font-bold text-foreground">{stats?.totalAgents ?? 0}</p>
                   </CardContent>
                 </Card>
                 <Card>
@@ -156,7 +156,7 @@ export default function DashboardPage() {
                     <Building2 className="h-4 w-4 text-muted-foreground" />
                   </CardHeader>
                   <CardContent>
-                    <p className="text-2xl font-bold text-slate-900">
+                    <p className="text-2xl font-bold text-foreground">
                       {stats?.totalDepartments ?? 0}
                     </p>
                   </CardContent>
@@ -192,7 +192,7 @@ export default function DashboardPage() {
                     </BarChart>
                   </ResponsiveContainer>
                 ) : (
-                  <p className="text-sm text-slate-400">{t('common.noTickets')}</p>
+                  <p className="text-sm text-muted-foreground">{t('common.noTickets')}</p>
                 )}
               </CardContent>
             </Card>
@@ -228,7 +228,7 @@ export default function DashboardPage() {
                     </PieChart>
                   </ResponsiveContainer>
                 ) : (
-                  <p className="text-sm text-slate-400">{t('common.noTickets')}</p>
+                  <p className="text-sm text-muted-foreground">{t('common.noTickets')}</p>
                 )}
               </CardContent>
             </Card>
@@ -259,7 +259,7 @@ export default function DashboardPage() {
                       </BarChart>
                     </ResponsiveContainer>
                   ) : (
-                    <p className="text-sm text-slate-400">{t('common.noAssignedTickets')}</p>
+                    <p className="text-sm text-muted-foreground">{t('common.noAssignedTickets')}</p>
                   )}
                 </CardContent>
               </Card>
@@ -280,11 +280,11 @@ export default function DashboardPage() {
                     <Link
                       key={t.id}
                       to={`/tickets/${t.id}`}
-                      className="flex items-center justify-between rounded-lg border p-3 transition-colors hover:bg-slate-50"
+                      className="flex items-center justify-between rounded-lg border p-3 transition-colors hover:bg-muted"
                     >
                       <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-medium text-slate-900">{t.subject}</p>
-                        <p className="text-xs text-slate-500">
+                        <p className="truncate text-sm font-medium text-foreground">{t.subject}</p>
+                        <p className="text-xs text-muted-foreground">
                           {t.requester.firstName} {t.requester.lastName}
                         </p>
                       </div>
@@ -292,7 +292,7 @@ export default function DashboardPage() {
                         <Badge variant={(statusBadge[t.status] || 'secondary') as any}>
                           {t.status.replace('_', ' ')}
                         </Badge>
-                        <span className="text-xs text-slate-400">
+                        <span className="text-xs text-muted-foreground">
                           {new Date(t.createdAt).toLocaleDateString()}
                         </span>
                       </div>
@@ -300,7 +300,7 @@ export default function DashboardPage() {
                   ))}
                 </div>
               ) : (
-                <p className="text-sm text-slate-400">{t('common.noTickets')}</p>
+                <p className="text-sm text-muted-foreground">{t('common.noTickets')}</p>
               )}
             </CardContent>
           </Card>

@@ -13,7 +13,6 @@ import { ChatModule } from '../chat/chat.module';
         connection: { url: config.getOrThrow<string>('REDIS_URL') },
       }),
     }),
-    BullModule.registerQueue({ name: 'sla-check' }, { name: 'email-processing' }),
     ChatModule,
   ],
   exports: [BullModule],

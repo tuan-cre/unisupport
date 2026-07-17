@@ -9,7 +9,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/card'
 import AppLayout from '../components/app-layout';
 
 export default function ChangePasswordPage() {
-  const { t } = useTranslation(['common', 'auth', 'page']);
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [currentPassword, setCurrentPassword] = useState('');
@@ -51,7 +51,7 @@ export default function ChangePasswordPage() {
           <form onSubmit={handleSubmit} className="space-y-4">
             {error && <p className="rounded-lg bg-red-50 p-3 text-sm text-red-600">{error}</p>}
             <div>
-              <label className="mb-1 block text-sm font-medium text-slate-700">
+              <label className="mb-1 block text-sm font-medium text-foreground">
                 {t('auth.currentPassword')}
               </label>
               <Input
@@ -61,7 +61,7 @@ export default function ChangePasswordPage() {
               />
             </div>
             <div>
-              <label className="mb-1 block text-sm font-medium text-slate-700">
+              <label className="mb-1 block text-sm font-medium text-foreground">
                 {t('auth.newPasswordLabel')}
               </label>
               <Input
@@ -71,7 +71,7 @@ export default function ChangePasswordPage() {
               />
             </div>
             <div>
-              <label className="mb-1 block text-sm font-medium text-slate-700">
+              <label className="mb-1 block text-sm font-medium text-foreground">
                 {t('auth.confirmNewPassword')}
               </label>
               <Input type="password" value={confirm} onChange={(e) => setConfirm(e.target.value)} />

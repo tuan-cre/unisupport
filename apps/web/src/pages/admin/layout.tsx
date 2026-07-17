@@ -30,7 +30,7 @@ const navItems = [
 ];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
-  const { t } = useTranslation('page');
+  const { t } = useTranslation();
 
   return (
     <AppLayout>
@@ -42,11 +42,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 key={item.to}
                 to={item.to}
                 className={({ isActive }) =>
-                  `flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive ? 'bg-primary/10 text-primary' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'}`
+                  `flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted hover:text-foreground'}`
                 }
               >
                 <item.icon className="h-4 w-4" />
-                {t(`page.${item.label}`)}
+                {t(item.label)}
               </NavLink>
             ))}
           </nav>

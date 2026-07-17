@@ -15,7 +15,7 @@ api.interceptors.request.use((config) => {
   }
   const lang = localStorage.getItem('lang');
   if (lang) {
-    config.headers.AcceptLanguage = lang;
+    config.headers['Accept-Language'] = lang;
   }
   return config;
 });

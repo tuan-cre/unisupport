@@ -20,7 +20,7 @@ interface AppLayoutProps {
 }
 
 export default function AppLayout({ children }: AppLayoutProps) {
-  const { t } = useTranslation('common');
+  const { t } = useTranslation();
   const { user, logout } = useAuth();
   const { notifications, unread, markRead, markAllRead } = useNotifications();
   const navigate = useNavigate();
@@ -65,7 +65,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
             UniSupport
           </button>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1 sm:gap-3">
             <LangSwitch />
             <button
               onClick={() => setTheme((p) => (p === 'light' ? 'dark' : 'light'))}
@@ -74,13 +74,29 @@ export default function AppLayout({ children }: AppLayoutProps) {
             >
               {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
             </button>
-            <Button variant="ghost" size="sm" onClick={() => navigate('/kb')}>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate('/kb')}
+              className="hidden sm:inline-flex"
+            >
               <BookOpen className="mr-1 h-4 w-4" />
               {t('page.knowledgeBase')}
             </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="sm:hidden h-9 w-9"
+              onClick={() => navigate('/kb')}
+              aria-label={t('page.knowledgeBase')}
+            >
+              <BookOpen className="h-4 w-4" />
+            </Button>
             <Button variant="outline" size="sm" onClick={() => navigate('/tickets/new')}>
-              <Plus className="mr-1 h-4 w-4" />
-              {t('common.create')} {t('page.tickets').toLowerCase()}
+              <Plus className="h-4 w-4 sm:mr-1" />
+              <span className="hidden sm:inline">
+                {t('common.create')} {t('page.tickets').toLowerCase()}
+              </span>
             </Button>
 
             <div className="relative" ref={notifRef}>

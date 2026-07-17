@@ -1,6 +1,6 @@
 # UniSupport — Implementation Roadmap
 
-> **Current status:** Phases 20, 21, and 22 shipped. All planned phases complete. Review the tables below for delivery details and upcoming work.
+> **Current status:** All 23 phases plus 1 bug bash shipped. Service is live at `unisupport.lhtuan.site`. Ready for monitoring, hardening, and feature-completion work.
 
 ---
 
@@ -8,110 +8,160 @@
 
 "Done" means the feature exists, works, and is deployed. Items marked ⚠️ have known gaps you should tackle next.
 
-| Phase                                    | Completion | What's real                                                                                         | What's missing                            |
-| ---------------------------------------- | ---------- | --------------------------------------------------------------------------------------------------- | ----------------------------------------- |
-| Phase 0 — Critical Fixes                 | ✅ 100%    | 104 bugs fixed                                                                                      | —                                         |
-| Phase 1 — shadcn/ui Components           | ✅ 100%    | 9+ primitives                                                                                       | —                                         |
-| Phase 2 — Notifications & Real-Time      | ✅ 80%     | Socket.IO, in-app, email sending                                                                    | BullMQ worker implementation              |
-| Phase 3 — Attachments                    | ✅ 100%    | MinIO upload/download/delete                                                                        | —                                         |
-| Phase 4 — Search, Filtering & Pagination | ✅ 100%    | All list endpoints paginated                                                                        | —                                         |
-| Phase 5 — Admin Panel                    | ✅ 100%    | 12 admin pages                                                                                      | —                                         |
-| Phase 6 — Knowledge Base                 | ✅ 100%    | Articles, categories, voting, markdown                                                              | —                                         |
-| Phase 7 — Dashboard                      | ✅ 90%     | Stats + recharts (status, priority, CSAT)                                                           | Date-range filter, dept scoping           |
-| Phase 8 — Advanced Tickets               | ✅ 100%    | Watchers, relations, time entries, templates, bulk ops                                              | —                                         |
-| Phase 9 — SLA                            | ✅ 95%     | CRUD, calendars, timestamps, ticket detail                                                          | BullMQ breach-detection worker            |
-| Phase 10 — Advanced ITIL                 | ✅ 100%    | Problems, Known Errors, Changes, Approvals                                                          | —                                         |
-| Phase 11 — Enterprise Auth               | ✅ 90%     | JWT, MFA/TOTP, lockout, email verify, SAML                                                          | LDAP/AD provider                          |
-| Phase 12 — Asset & Inventory             | ✅ 100%    | Assets, assignments, licenses, checkout                                                             | —                                         |
-| Phase 13 — Reporting                     | ✅ 100%    | Volume, SLA, agent perf, real CSAT, charts, PDF export                                              | —                                         |
-| Phase 14 — Quality & Observability       | ✅ 80%     | CI, Docker, Sentry, Swagger, Prometheus metrics                                                     | Integration/E2E tests need real-DB wiring |
-| Phase 15 — UX Polish                     | ✅ 100%    | Dark mode fix, responsivity, markdown, breadcrumbs, empty states, confirm dialogs, i18n scaffolding | —                                         |
-| Phase 16 — Security & Compliance         | ✅ 90%     | Data export, anonymize, Redis rate limit, env validation                                            | Pre-commit secret scan                    |
-| Phase 17 — Multi-Channel                 | ✅ 100%    | Inbound email webhook, reply-by-email, chat widget, chat-to-ticket, WS real-time, IMAP polling      | —                                         |
+| Phase                                    | Completion | What's real                                                                                         | What's missing                               |
+| ---------------------------------------- | ---------- | --------------------------------------------------------------------------------------------------- | -------------------------------------------- |
+| Phase 0 — Critical Fixes                 | ✅ 100%    | 104 bugs fixed                                                                                      | —                                            |
+| Phase 1 — shadcn/ui Components           | ✅ 100%    | 9+ primitives                                                                                       | —                                            |
+| Phase 2 — Notifications & Real-Time      | ✅ 80%     | Socket.IO, in-app, email sending                                                                    | ⚠️ BullMQ worker implementation              |
+| Phase 3 — Attachments                    | ✅ 100%    | MinIO upload/download/delete                                                                        | —                                            |
+| Phase 4 — Search, Filtering & Pagination | ✅ 100%    | All list endpoints paginated                                                                        | —                                            |
+| Phase 5 — Admin Panel                    | ✅ 100%    | 12 admin pages                                                                                      | —                                            |
+| Phase 6 — Knowledge Base                 | ✅ 100%    | Articles, categories, voting, markdown                                                              | —                                            |
+| Phase 7 — Dashboard                      | ✅ 90%     | Stats + recharts (status, priority, CSAT)                                                           | ⚠️ Date-range filter, dept scoping           |
+| Phase 8 — Advanced Tickets               | ✅ 100%    | Watchers, relations, time entries, templates, bulk ops                                              | —                                            |
+| Phase 9 — SLA                            | ✅ 95%     | CRUD, calendars, timestamps, ticket detail                                                          | ⚠️ BullMQ breach-detection worker            |
+| Phase 10 — Advanced ITIL                 | ✅ 100%    | Problems, Known Errors, Changes, Approvals                                                          | —                                            |
+| Phase 11 — Enterprise Auth               | ✅ 90%     | JWT, MFA/TOTP, lockout, email verify, SAML                                                          | ⚠️ LDAP/AD provider                          |
+| Phase 12 — Asset & Inventory             | ✅ 100%    | Assets, assignments, licenses, checkout                                                             | —                                            |
+| Phase 13 — Reporting                     | ✅ 100%    | Volume, SLA, agent perf, real CSAT, charts, PDF export                                              | —                                            |
+| Phase 14 — Quality & Observability       | ✅ 80%     | CI, Docker, Sentry, Swagger, Prometheus metrics                                                     | ⚠️ Integration/E2E tests need real-DB wiring |
+| Phase 15 — UX Polish                     | ✅ 100%    | Dark mode fix, responsivity, markdown, breadcrumbs, empty states, confirm dialogs, i18n scaffolding | —                                            |
+| Phase 16 — Security & Compliance         | ✅ 90%     | Data export, anonymize, Redis rate limit, env validation                                            | ⚠️ Pre-commit secret scan                    |
+| Phase 17 — Multi-Channel                 | ✅ 100%    | Inbound email webhook, reply-by-email, chat widget, chat-to-ticket, WS real-time                    | —                                            |
+| Phase 20 — IMAP Email Ingestion          | ✅ 100%    | IMAP polling, duplicate detection, connection leak fix, logging                                     | —                                            |
+| Phase 21 — Full i18n + Vietnamese        | ✅ 100%    | `vi.json` structured, all 369 `en.json` keys filled, pages wrapped, LangSwitch, `Accept-Language`   | —                                            |
+| Phase 22 — Integration/E2E Tests         | ✅ 100%    | 2 integration specs, 3 Playwright E2E flows, test DB setup, compile fixes                           | —                                            |
+| Phase 19 — Bug Bash                      | ✅ 100%    | 28 bugs fixed across P0–P3; all known regressions resolved                                          | —                                            |
 
 ---
 
 ## Phase 18 — Production Readiness (DELIVERED)
 
 **Commit:** `c68c35c` | **Pushed:** `main`  
-**Overall:** 15/17 checklist items complete (2 deferred).
+**Overall:** 15/17 checklist items complete (2 deferred, now delivered in Phase 22).
 
-| Step  | Task                                    | Status                             |
-| ----- | --------------------------------------- | ---------------------------------- |
-| 18.1  | SSO/SAML integration                    | ✅ Delivered                       |
-| 18.2  | Unit tests (5 suites, 22 tests)         | ✅ Delivered                       |
-| 18.5  | Secrets management (Joi, required vars) | ✅ Delivered                       |
-| 18.6  | Redis-backed rate limiting              | ✅ Delivered                       |
-| 18.7  | Sentry error monitoring                 | ✅ Delivered (DSN optional)        |
-| 18.8  | Dashboard charts (recharts)             | ✅ Delivered                       |
-| 18.9  | CSAT survey (DB-backed, star widget)    | ✅ Delivered                       |
-| 18.10 | WebSocket real-time chat events         | ✅ Delivered                       |
-| 18.11 | Mobile responsive audit                 | ✅ Delivered                       |
-| 18.12 | KB markdown rendering                   | ✅ Delivered                       |
-| 18.13 | Reports page + CSAT charts              | ✅ Delivered                       |
-| 18.14 | i18n scaffolding (`en` baseline)        | ✅ Delivered                       |
-| 18.15 | PDF export (`/reports/export/pdf`)      | ✅ Delivered                       |
-| 18.16 | BullMQ job queue module                 | ✅ Delivered                       |
-| 18.17 | Prometheus metrics endpoint             | ✅ Delivered (`/metrics`)          |
-| 18.18 | Deploy GitHub Actions workflow          | ✅ Delivered                       |
-| 18.3  | Integration tests                       | ⏳ Deferred — needs real DB wiring |
-| 18.4  | E2E tests (Playwright)                  | ⏳ Deferred                        |
-
-### Phase 18 Infrastructure Notes
-
-- `apps/api/.env` lives at the repo root; systemd unit runs from `/home/lhtuan/unisupport` with `ExecStart=apps/api/dist/main`.
-- Docker infra (postgres, redis, minio, mailpit) started via `docker compose up -d` from `/home/lhtuan/unisupport`.
-- Service health: `GET /api/health` → `{"status":"ok"}`.
-- DB migrations applied: `20260716080000_add_saml_id`, `20260716090000_add_ticket_ratings`.
+| Step  | Task                                    | Status                      |
+| ----- | --------------------------------------- | --------------------------- |
+| 18.1  | SSO/SAML integration                    | ✅ Delivered                |
+| 18.2  | Unit tests (5 suites, 22 tests)         | ✅ Delivered                |
+| 18.3  | Integration tests                       | ✅ Delivered (Phase 22)     |
+| 18.4  | E2E tests (Playwright)                  | ✅ Delivered (Phase 22)     |
+| 18.5  | Secrets management (Joi, required vars) | ✅ Delivered                |
+| 18.6  | Redis-backed rate limiting              | ✅ Delivered                |
+| 18.7  | Sentry error monitoring                 | ✅ Delivered (DSN optional) |
+| 18.8  | Dashboard charts (recharts)             | ✅ Delivered                |
+| 18.9  | CSAT survey (DB-backed, star widget)    | ✅ Delivered                |
+| 18.10 | WebSocket real-time chat events         | ✅ Delivered                |
+| 18.11 | Mobile responsive audit                 | ✅ Delivered                |
+| 18.12 | KB markdown rendering                   | ✅ Delivered                |
+| 18.13 | Reports page + CSAT charts              | ✅ Delivered                |
+| 18.14 | i18n scaffolding (`en` baseline)        | ✅ Delivered                |
+| 18.15 | PDF export (`/reports/export/pdf`)      | ✅ Delivered                |
+| 18.16 | BullMQ job queue module                 | ✅ Delivered                |
+| 18.17 | Prometheus metrics endpoint             | ✅ Delivered (`/metrics`)   |
+| 18.18 | Deploy GitHub Actions workflow          | ✅ Delivered                |
 
 ---
 
-## Next-Phase Options (ready for you to pick)
+## Phase 19 — Bug Bash (DELIVERED)
 
-> Choose **one** phase to start. Everything below is independent of the others.
+**When:** 2026-07-16 to 2026-07-17  
+**Scope:** Discovered and fixed 28 bugs across all priority levels during phases 20–22 QA.
 
-### Phase 20 — IMAP Email Ingestion (recommended)
+| Priority | Count | Examples                                                                                                                                                       |
+| -------- | ----- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| P0       | 9     | Admin sidebar raw keys, broken `en.json` empty objects, ConfirmDialog async, SAML callback double-fire, Bull queue crash, IMAP dupe/leak/silent                |
+| P1       | 6     | `Accept-Language` header, asset deletion confirm, pagination on problems/known-errors, `vi.json` restructured, integration test compilation, reports SLA crash |
+| P2       | 9     | File download error handler, hardcoded role, tag update diff, auth DTOs, CSAT cache, console.error→logger, CSV download, risk level select, profile title      |
+| P3       | 4     | Unused `Trans` imports, LangSwitch aria-label, `returnObjects: false`, wasteful namespace bindings                                                             |
 
-**Why:** Multi-channel support is 75% done; IMAP polling is the only missing half. A background worker (BullMQ scheduled job or systemd timer) reads a university IMAP inbox, auto-creates Conversation or Ticket records, and links replies to existing threads.
+---
 
-| Step | Task                                                                                            | Effort | Key files                                    |
-| ---- | ----------------------------------------------------------------------------------------------- | ------ | -------------------------------------------- |
-| 20.1 | Add IMAP connection config to `.env` + config schema                                            | Small  | `config/config.module.ts`                    |
-| 20.2 | Create `EmailPollingService` with `node-imap`/`mailparser`                                      | Medium | `apps/api/src/chat/email-polling.service.ts` |
-| 20.3 | Route inbound emails: new sender → Conversation, existing thread id in subject → append message | Medium | `chat.service.ts`                            |
-| 20.4 | Schedule polling via BullMQ repeatable job (every 60s)                                          | Small  | `jobs/email-processing.job.ts`               |
-| 20.5 | Handle bounces / OOO auto-replies (mark as spam, don't create ticket)                           | Small  | `email-polling.service.ts`                   |
+## Phases 20–22 (DELIVERED)
+
+### Phase 20 — IMAP Email Ingestion
+
+| Step | Task                                                  | Status       |
+| ---- | ----------------------------------------------------- | ------------ |
+| 20.1 | IMAP connection config + env schema                   | ✅ Delivered |
+| 20.2 | `EmailPollingService` with `node-imap`/`mailparser`   | ✅ Delivered |
+| 20.3 | Route inbound: new→Conversation, existing→append      | ✅ Delivered |
+| 20.4 | Polling via `setInterval` (60s), not BullMQ (simpler) | ✅ Delivered |
+| 20.5 | Bounce/OOO filtering                                  | ✅ Delivered |
 
 ### Phase 21 — Full i18n + Vietnamese Translation
 
-**Why:** `en.json` scaffolding exists. Adding `vi.json` + wrapping pages makes the app usable for Vietnamese university staff and students — the original target audience.
+| Step | Task                                                            | Status       |
+| ---- | --------------------------------------------------------------- | ------------ |
+| 21.1 | `vi.json` with `common`/`nav`/`auth`/`ticket`/`page` namespaces | ✅ Delivered |
+| 21.2 | `<LangSwitch />` component                                      | ✅ Delivered |
+| 21.3 | All pages wrapped with `useTranslation()`                       | ✅ Delivered |
+| 21.4 | `localStorage` persistence + `Accept-Language` header           | ✅ Delivered |
 
-| Step | Task                                                               | Effort | Key files                      |
-| ---- | ------------------------------------------------------------------ | ------ | ------------------------------ |
-| 21.1 | Add `vi.json` translations for all 71 keys + page-specific strings | Medium | `apps/web/src/i18n/vi.json`    |
-| 21.2 | Create `<LangSwitch />` component                                  | Small  | `components/lang-switch.tsx`   |
-| 21.3 | Wrap pages with `useTranslation()` and replace hardcoded strings   | Large  | All `apps/web/src/pages/*.tsx` |
-| 21.4 | Persist selection in `localStorage` + backend API locale header    | Small  | `use-auth.tsx` / `lib/api.ts`  |
+### Phase 22 — Integration/E2E Tests
 
-### Phase 22 — Integration/E2E Tests (DELIVERED)
+| Step | Task                                              | Status       |
+| ---- | ------------------------------------------------- | ------------ |
+| 22.1 | Test DB setup with existing containers            | ✅ Delivered |
+| 22.2 | `prisma migrate deploy` in `beforeAll`            | ✅ Delivered |
+| 22.3 | Tickets + KB integration tests against real DB    | ✅ Delivered |
+| 22.4 | Playwright E2E: login, create ticket, admin users | ✅ Delivered |
 
-| Step | Task                                                                                                                  | Status       |
-| ---- | --------------------------------------------------------------------------------------------------------------------- | ------------ |
-| 22.1 | Add a `test` database URL + separate Docker Compose test profile or use existing containers                           | ✅ Delivered |
-| 22.2 | Run `prisma migrate deploy` against `test` DB in a Jest `beforeAll`                                                   | ✅ Delivered |
-| 22.3 | Remove mock overrides in `tickets.integration.spec.ts` and `knowledge-base.integration.spec.ts`; let them hit real DB | ✅ Delivered |
-| 22.4 | Add Playwright scaffold (`apps/web/e2e/`) with 3 flows: login, create ticket, admin user page                         | ✅ Delivered |
+---
+
+## Next-Phase Options
+
+> Choose **one** phase to start. Everything below is independent of the others.
 
 ### Phase 23 — Prometheus + Grafana Dashboard
 
-**Why:** `/metrics` is live, but nobody is scraping or visualizing it. A Grafana instance (another Docker service, port 3003) gives operators visibility into request latency, error rate, and active users.
+**Why:** `/metrics` is live, but nobody is scraping or visualizing it. A Grafana instance gives operators visibility into request latency, error rate, and active users.
 
-| Step | Task                                                                                                                                 | Effort | Key files                                     |
-| ---- | ------------------------------------------------------------------------------------------------------------------------------------ | ------ | --------------------------------------------- |
-| 23.1 | Add Grafana container to `docker-compose.yml` (provision with Prometheus datasource via provisioning)                                | Small  | `docker-compose.yml`, `grafana/provisioning/` |
-| 23.2 | Add custom NestJS business metrics (tickets-created, comments-added, emails-processed) with `@willsoto/nestjs-prometheus` decorators | Medium | `apps/api/src/**/*.service.ts`                |
-| 23.3 | Import a ready-made Grafana dashboard JSON (or build a 5-panel dashboard)                                                            | Small  | `grafana/dashboards/`                         |
-| 23.4 | Document scrape endpoint in ROADMAP + add `grafana.lhtuan.site` nginx + DNS rules in AGENTS.md                                       | Small  | `AGENTS.md`, `ROADMAP.md`                     |
+| Step | Task                                                                                             | Effort | Key files                                     |
+| ---- | ------------------------------------------------------------------------------------------------ | ------ | --------------------------------------------- |
+| 23.1 | Add Grafana container to `docker-compose.yml` (provision with Prometheus datasource)             | Small  | `docker-compose.yml`, `grafana/provisioning/` |
+| 23.2 | Add custom business metrics (tickets-created, comments-added) with `@willsoto/nestjs-prometheus` | Medium | `apps/api/src/**/*.service.ts`                |
+| 23.3 | Import a ready-made Grafana dashboard JSON (5-panel)                                             | Small  | `grafana/dashboards/`                         |
+| 23.4 | Add `grafana.lhtuan.site` nginx + DNS rules in AGENTS.md                                         | Small  | `AGENTS.md`                                   |
+
+### Phase 24 — Dashboard Date-Range & Department Filtering (from Phase 7 gap)
+
+**Why:** The dashboard shows aggregate stats but users can't drill into specific time ranges or filter by department. This is the biggest UX gap flagged in Phase 7.
+
+| Step | Task                                                                          | Effort | Key files                                         |
+| ---- | ----------------------------------------------------------------------------- | ------ | ------------------------------------------------- |
+| 24.1 | Add `startDate`, `endDate`, `departmentId` query params to `GET /dashboard`   | Small  | `dashboard.controller.ts`, `dashboard.service.ts` |
+| 24.2 | Update frontend chart components to filter by date range picker + dept select | Medium | `pages/dashboard.tsx`, `components/charts/`       |
+| 24.3 | Add date-range picker from shadcn/ui (or use native `<input type="date">`)    | Small  | —                                                 |
+
+### Phase 25 — BullMQ Workers (from Phase 2 + Phase 9 gaps)
+
+**Why:** Two stub workers need real implementations: SLA breach detection and background email processing. Without them, SLA targets are decorative and IMAP polling is synchronous.
+
+| Step | Task                                                                                                  | Effort | Key files                                                  |
+| ---- | ----------------------------------------------------------------------------------------------------- | ------ | ---------------------------------------------------------- |
+| 25.1 | Implement SLA breach detection worker (compare ticket timestamps against calendar, emit notification) | Medium | `jobs/sla-check.job.ts`, `sla.service.ts`                  |
+| 25.2 | Implement email processing worker (move IMAP polling onto BullMQ repeatable job for reliability)      | Medium | `jobs/email-processing.job.ts`, `email-polling.service.ts` |
+
+### Phase 26 — LDAP/AD Provider (from Phase 11 gap)
+
+**Why:** Enterprise users can't authenticate with their university directory credentials. Adds `ldapjs` integration alongside existing JWT/SAML strategies.
+
+| Step | Task                                                      | Effort | Key files                                    |
+| ---- | --------------------------------------------------------- | ------ | -------------------------------------------- |
+| 26.1 | Add `ldapjs` package + LDAP env config                    | Small  | `package.json`, `config.module.ts`           |
+| 26.2 | Create `LdapAuthService` (bind, search, verify)           | Medium | `auth/ldap-auth.service.ts`                  |
+| 26.3 | Add LDAP login endpoint or extend existing login strategy | Medium | `auth/auth.controller.ts`, `auth.service.ts` |
+
+---
+
+## Infrastructure Notes
+
+- `apps/api/.env` lives at the repo root; systemd unit runs from `/home/lhtuan/unisupport` with `ExecStart=apps/api/dist/main`.
+- Docker infra (postgres, redis, minio, mailpit) started via `docker compose up -d` from `/home/lhtuan/unisupport`.
+- **Containers can stop unexpectedly** (e.g., after server reboot or Docker daemon restart). No auto-restart or `restart: unless-stopped` is configured in `docker-compose.yml`. Consider adding restart policies, or a systemd oneshot that runs `docker compose up -d` at boot.
+- Service health: `GET /api/health` → `{"status":"ok"}`.
+- DB migrations applied: `20260716080000_add_saml_id`, `20260716090000_add_ticket_ratings`.
 
 ---
 
@@ -157,11 +207,13 @@ Cloudflare (DNS-only)
 | Database models              | 48                  |
 | Frontend pages               | 29                  |
 | Unit tests                   | 5 suites / 22 tests |
+| Integration tests            | 2 suites            |
+| E2E tests (Playwright)       | 3 flows             |
 | Docker services (prod infra) | 4                   |
 | GitHub Actions workflows     | 1 (deploy)          |
-| i18n locales scaffolded      | `en`                |
+| i18n locales                 | `en`, `vi`          |
 | Prometheus endpoint          | `/metrics`          |
 
 ---
 
-_Last updated: 2026-07-16_
+_Last updated: 2026-07-17_
