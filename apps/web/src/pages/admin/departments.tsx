@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../../lib/api';
@@ -30,6 +31,7 @@ function DepartmentFormDialog({
 }) {
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const { t } = useTranslation(['common', 'page']);
   const [name, setName] = useState(dept?.name ?? '');
 
   const mutation = useMutation({
@@ -42,12 +44,12 @@ function DepartmentFormDialog({
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['departments'] });
-      toast({ title: dept ? 'Department updated' : 'Department created' });
+      toast({ title: dept ? t('Department updated') : t('Department created') });
       onOpenChange(false);
     },
     onError: (err: any) => {
       toast({
-        title: err.response?.data?.message || 'Failed to save department',
+        title: err.response?.data?.message || t('Failed to save department'),
         variant: 'destructive',
       });
     },
@@ -57,23 +59,19 @@ function DepartmentFormDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{dept ? 'Edit Department' : 'Create Department'}</DialogTitle>
+          <DialogTitle>{dept ? t('Edit Department') : t('Create Department')}</DialogTitle>
         </DialogHeader>
         <div className="space-y-4 pt-2">
           <div className="space-y-1">
-            <label className="text-sm font-medium">Name</label>
-            <Input
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="Department name"
-            />
+            <label className="text-sm font-medium">{t('Name')}</label>
+            <Input value={name} onChange={(e) => setName(e.target.value)} placeholder={t('Name')} />
           </div>
           <div className="flex justify-end gap-2 pt-2">
             <Button variant="outline" onClick={() => onOpenChange(false)}>
-              Cancel
+              {t('Cancel')}
             </Button>
             <Button onClick={() => mutation.mutate()} disabled={mutation.isPending || !name.trim()}>
-              {mutation.isPending ? 'Saving...' : 'Save'}
+              {mutation.isPending ? t('Saving...') : t('Save')}
             </Button>
           </div>
         </div>
@@ -83,6 +81,7 @@ function DepartmentFormDialog({
 }
 
 export default function AdminDepartmentsPage() {
+  const { t } = useTranslation(['common', 'page']);
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [showForm, setShowForm] = useState(false);
@@ -102,24 +101,24 @@ export default function AdminDepartmentsPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['departments'] });
-      toast({ title: 'Department deleted' });
+      toast({ title: t('Department deleted') });
     },
     onError: () => {
-      toast({ title: 'Failed to delete department', variant: 'destructive' });
+      toast({ title: t('Failed to delete department'), variant: 'destructive' });
     },
   });
 
   return (
     <AdminLayout>
       <div className="mb-6 flex items-center justify-between">
-        <h2 className="text-xl font-semibold text-slate-900">Departments</h2>
+        <h2 className="text-xl font-semibold text-slate-900">{t('Departments')}</h2>
         <Button
           onClick={() => {
             setEditingDept(undefined);
             setShowForm(true);
           }}
         >
-          Create department
+          {t('Create department')}
         </Button>
       </div>
 
@@ -131,50 +130,52 @@ export default function AdminDepartmentsPage() {
         </div>
       )}
 
-      {depts && depts.length === 0 && <p className="text-slate-500">No departments yet.</p>}
+      {depts && depts.length === 0 && <p className="text-slate-500">{t('No departments yet.')}</p>}
 
       {depts && depts.length > 0 && (
         <div className="overflow-hidden rounded-xl border bg-white">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b bg-slate-50 text-left text-sm font-medium text-slate-600">
-                <th className="px-4 py-3">Name</th>
-                <th className="px-4 py-3 text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {depts.map((d) => (
-                <tr key={d.id} className="border-b last:border-0">
-                  <td className="px-4 py-3 text-sm font-medium text-slate-900">{d.name}</td>
-                  <td className="px-4 py-3 text-right">
-                    <div className="flex justify-end gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          setEditingDept(d);
-                          setShowForm(true);
-                        }}
-                      >
-                        Edit
-                      </Button>
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        onClick={() => {
-                          if (confirm(`Delete department "${d.name}"?`)) {
-                            deleteMutation.mutate(d.id);
-                          }
-                        }}
-                      >
-                        Delete
-                      </Button>
-                    </div>
-                  </td>
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b bg-slate-50 text-left text-sm font-medium text-slate-600">
+                  <th className="px-4 py-3">{t('Name')}</th>
+                  <th className="px-4 py-3 text-right">{t('Actions')}</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {depts.map((d) => (
+                  <tr key={d.id} className="border-b last:border-0">
+                    <td className="px-4 py-3 text-sm font-medium text-slate-900">{d.name}</td>
+                    <td className="px-4 py-3 text-right">
+                      <div className="flex justify-end gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            setEditingDept(d);
+                            setShowForm(true);
+                          }}
+                        >
+                          {t('Edit')}
+                        </Button>
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => {
+                            if (confirm(t('Delete department "{{name}}"?', { name: d.name }))) {
+                              deleteMutation.mutate(d.id);
+                            }
+                          }}
+                        >
+                          {t('Delete')}
+                        </Button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 

@@ -1,11 +1,13 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../hooks/use-auth';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/card';
 
 export default function RegisterPage() {
+  const { t } = useTranslation(['common', 'auth', 'page']);
   const { register } = useAuth();
   const navigate = useNavigate();
   const [firstName, setFirstName] = useState('');
@@ -21,10 +23,10 @@ export default function RegisterPage() {
     setErrors({});
     setGeneralError('');
     const fieldErrors: Record<string, string> = {};
-    if (!firstName || firstName.length < 2) fieldErrors.firstName = 'At least 2 characters';
-    if (!lastName || lastName.length < 2) fieldErrors.lastName = 'At least 2 characters';
-    if (!email) fieldErrors.email = 'Email is required';
-    if (!password || password.length < 8) fieldErrors.password = 'At least 8 characters';
+    if (!firstName || firstName.length < 2) fieldErrors.firstName = t('common.atLeast2Chars');
+    if (!lastName || lastName.length < 2) fieldErrors.lastName = t('common.atLeast2Chars');
+    if (!email) fieldErrors.email = t('auth.emailIsRequired');
+    if (!password || password.length < 8) fieldErrors.password = t('auth.atLeast8Chars');
     if (Object.keys(fieldErrors).length > 0) {
       setErrors(fieldErrors);
       return;
@@ -34,7 +36,7 @@ export default function RegisterPage() {
       await register(email, password, firstName, lastName);
       navigate('/tickets');
     } catch (err: any) {
-      const msg = err.response?.data?.message || 'Registration failed';
+      const msg = err.response?.data?.message || t('common.error');
       if (msg.toLowerCase().includes('email')) {
         setErrors((prev) => ({ ...prev, email: msg }));
       } else {
@@ -52,7 +54,7 @@ export default function RegisterPage() {
           <p className="mb-1 text-xs font-bold uppercase tracking-[0.18em] text-blue-600">
             UniSupport
           </p>
-          <CardTitle className="text-2xl">Create account</CardTitle>
+          <CardTitle className="text-2xl">{t('page.register')}</CardTitle>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -61,7 +63,12 @@ export default function RegisterPage() {
             )}
 
             <div>
-              <label htmlFor="register-firstname" className="mb-1 block text-sm font-medium text-slate-700">First name</label>
+              <label
+                htmlFor="register-firstname"
+                className="mb-1 block text-sm font-medium text-slate-700"
+              >
+                {t('common.firstLabel')}
+              </label>
               <Input
                 id="register-firstname"
                 value={firstName}
@@ -72,7 +79,12 @@ export default function RegisterPage() {
             </div>
 
             <div>
-              <label htmlFor="register-lastname" className="mb-1 block text-sm font-medium text-slate-700">Last name</label>
+              <label
+                htmlFor="register-lastname"
+                className="mb-1 block text-sm font-medium text-slate-700"
+              >
+                {t('common.lastLabel')}
+              </label>
               <Input
                 id="register-lastname"
                 value={lastName}
@@ -83,7 +95,12 @@ export default function RegisterPage() {
             </div>
 
             <div>
-              <label htmlFor="register-email" className="mb-1 block text-sm font-medium text-slate-700">Email</label>
+              <label
+                htmlFor="register-email"
+                className="mb-1 block text-sm font-medium text-slate-700"
+              >
+                {t('auth.email')}
+              </label>
               <Input
                 id="register-email"
                 type="email"
@@ -95,7 +112,12 @@ export default function RegisterPage() {
             </div>
 
             <div>
-              <label htmlFor="register-password" className="mb-1 block text-sm font-medium text-slate-700">Password</label>
+              <label
+                htmlFor="register-password"
+                className="mb-1 block text-sm font-medium text-slate-700"
+              >
+                {t('auth.password')}
+              </label>
               <Input
                 id="register-password"
                 type="password"
@@ -107,13 +129,13 @@ export default function RegisterPage() {
             </div>
 
             <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? 'Registering...' : 'Register'}
+              {loading ? t('common.registering') : t('auth.signUp')}
             </Button>
 
             <p className="text-center text-sm text-slate-500">
-              Already have an account?{' '}
+              {t('common.alreadyAccount')}{' '}
               <Link to="/login" className="text-blue-600 hover:underline">
-                Sign in
+                {t('auth.signIn')}
               </Link>
             </p>
           </form>

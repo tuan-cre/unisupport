@@ -1,23 +1,20 @@
 import { Module } from '@nestjs/common';
 import { BullModule } from '@nestjs/bullmq';
-import { ConfigService } from '@nestjs/config';
-import { AppConfigModule } from '../config/config.module';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import { ChatModule } from '../chat/chat.module';
 
 @Module({
   imports: [
+    ConfigModule,
     BullModule.forRootAsync({
-      imports: [AppConfigModule],
+      imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: (config: ConfigService) => ({
-        connection: {
-          url: config.getOrThrow<string>('REDIS_URL'),
-        },
+        connection: { url: config.getOrThrow<string>('REDIS_URL') },
       }),
     }),
-    BullModule.registerQueue(
-      { name: 'sla-check' },
-      { name: 'email-processing' },
-    ),
+    BullModule.registerQueue({ name: 'sla-check' }, { name: 'email-processing' }),
+    ChatModule,
   ],
   exports: [BullModule],
 })

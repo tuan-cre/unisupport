@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../../lib/api';
@@ -18,6 +19,7 @@ import {
 import { Clock } from 'lucide-react';
 
 export default function AdminSlasPage() {
+  const { t } = useTranslation(['common', 'page']);
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [showForm, setShowForm] = useState(false);
@@ -55,11 +57,11 @@ export default function AdminSlasPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-slas'] });
-      toast({ title: editing ? 'SLA updated' : 'SLA created' });
+      toast({ title: editing ? t('SLA updated') : t('SLA created') });
       resetForm();
     },
     onError: (err: any) => {
-      toast({ title: err.response?.data?.message || 'Failed to save', variant: 'destructive' });
+      toast({ title: err.response?.data?.message || t('Failed to save'), variant: 'destructive' });
     },
   });
 
@@ -67,7 +69,7 @@ export default function AdminSlasPage() {
     mutationFn: (id: string) => api.delete(`/slas/${id}`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-slas'] });
-      toast({ title: 'SLA deleted' });
+      toast({ title: t('SLA deleted') });
     },
   });
 
@@ -103,8 +105,8 @@ export default function AdminSlasPage() {
   return (
     <AdminLayout>
       <div className="mb-6 flex items-center justify-between">
-        <h2 className="text-xl font-semibold text-slate-900">SLA Policies</h2>
-        <Button onClick={resetForm}>Create SLA</Button>
+        <h2 className="text-xl font-semibold text-slate-900">{t('SLA Policies')}</h2>
+        <Button onClick={resetForm}>{t('Create SLA')}</Button>
       </div>
 
       {isLoading && (
@@ -115,7 +117,7 @@ export default function AdminSlasPage() {
         </div>
       )}
 
-      {slas && slas.length === 0 && <p className="text-slate-500">No SLA policies yet.</p>}
+      {slas && slas.length === 0 && <p className="text-slate-500">{t('No SLA policies yet.')}</p>}
 
       {slas && slas.length > 0 && (
         <div className="space-y-3">
@@ -125,7 +127,7 @@ export default function AdminSlasPage() {
                 <div className="flex-1">
                   <div className="flex items-center gap-2">
                     <h3 className="font-medium text-slate-900">{s.name}</h3>
-                    {s.isDefault && <Badge>Default</Badge>}
+                    {s.isDefault && <Badge>{t('Default')}</Badge>}
                     <span
                       className={`rounded px-2 py-0.5 text-xs font-medium ${priorityColors[s.priority] || ''}`}
                     >
@@ -138,27 +140,31 @@ export default function AdminSlasPage() {
                   <div className="mt-1.5 flex items-center gap-4 text-xs text-slate-600">
                     <span className="flex items-center gap-1">
                       <Clock className="h-3 w-3" />
-                      Response: {s.responseTime}m
+                      {t('Response:')} {s.responseTime}m
                     </span>
                     <span className="flex items-center gap-1">
                       <Clock className="h-3 w-3" />
-                      Resolution: {s.resolutionTime}m
+                      {t('Resolution:')} {s.resolutionTime}m
                     </span>
-                    {s.calendar && <span>Calendar: {s.calendar.name}</span>}
+                    {s.calendar && (
+                      <span>
+                        {t('Calendar:')} {s.calendar.name}
+                      </span>
+                    )}
                   </div>
                 </div>
                 <div className="flex gap-2 shrink-0">
                   <Button variant="outline" size="sm" onClick={() => openEdit(s)}>
-                    Edit
+                    {t('Edit')}
                   </Button>
                   <Button
                     variant="destructive"
                     size="sm"
                     onClick={() => {
-                      if (confirm('Delete this SLA policy?')) deleteMutation.mutate(s.id);
+                      if (confirm(t('Delete this SLA policy?'))) deleteMutation.mutate(s.id);
                     }}
                   >
-                    Delete
+                    {t('Delete')}
                   </Button>
                 </div>
               </div>
@@ -176,34 +182,34 @@ export default function AdminSlasPage() {
         >
           <DialogContent className="max-w-md">
             <DialogHeader>
-              <DialogTitle>{editing ? 'Edit SLA' : 'Create SLA'}</DialogTitle>
+              <DialogTitle>{editing ? t('Edit SLA') : t('Create SLA')}</DialogTitle>
             </DialogHeader>
             <div className="space-y-4 pt-2">
               <div className="space-y-1">
-                <label className="text-sm font-medium">Name</label>
+                <label className="text-sm font-medium">{t('Name')}</label>
                 <Input value={name} onChange={(e) => setName(e.target.value)} />
               </div>
               <div className="space-y-1">
-                <label className="text-sm font-medium">Description</label>
+                <label className="text-sm font-medium">{t('Description')}</label>
                 <Input value={description} onChange={(e) => setDescription(e.target.value)} />
               </div>
               <div className="space-y-1">
-                <label className="text-sm font-medium">Priority</label>
+                <label className="text-sm font-medium">{t('Priority')}</label>
                 <Select value={priority} onValueChange={setPriority}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select priority" />
+                    <SelectValue placeholder={t('Priority')} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="LOW">Low</SelectItem>
-                    <SelectItem value="MEDIUM">Medium</SelectItem>
-                    <SelectItem value="HIGH">High</SelectItem>
-                    <SelectItem value="URGENT">Urgent</SelectItem>
+                    <SelectItem value="LOW">{t('Low')}</SelectItem>
+                    <SelectItem value="MEDIUM">{t('Medium')}</SelectItem>
+                    <SelectItem value="HIGH">{t('High')}</SelectItem>
+                    <SelectItem value="URGENT">{t('Urgent')}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <div className="space-y-1">
-                  <label className="text-sm font-medium">Response time (min)</label>
+                  <label className="text-sm font-medium">{t('Response time (min)')}</label>
                   <Input
                     type="number"
                     min="1"
@@ -212,7 +218,7 @@ export default function AdminSlasPage() {
                   />
                 </div>
                 <div className="space-y-1">
-                  <label className="text-sm font-medium">Resolution time (min)</label>
+                  <label className="text-sm font-medium">{t('Resolution time (min)')}</label>
                   <Input
                     type="number"
                     min="1"
@@ -228,11 +234,11 @@ export default function AdminSlasPage() {
                   onChange={(e) => setIsDefault(e.target.checked)}
                   className="h-4 w-4 rounded border-slate-300"
                 />
-                Default SLA (applied to new tickets without priority match)
+                {t('Default SLA (applied to new tickets without priority match)')}
               </label>
               <div className="flex justify-end gap-2 pt-2">
                 <Button variant="outline" onClick={resetForm}>
-                  Cancel
+                  {t('Cancel')}
                 </Button>
                 <Button
                   onClick={() => saveMutation.mutate()}
@@ -244,7 +250,7 @@ export default function AdminSlasPage() {
                     !resolutionTime
                   }
                 >
-                  {saveMutation.isPending ? 'Saving...' : 'Save'}
+                  {saveMutation.isPending ? t('Saving...') : t('Save')}
                 </Button>
               </div>
             </div>

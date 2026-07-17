@@ -26,6 +26,7 @@ git pull origin main
 
 npm ci
 npm run build --workspace=packages/shared
+npx prisma generate --schema=apps/api/prisma/schema.prisma
 npm run build --workspace=apps/api
 npx prisma migrate deploy --schema=apps/api/prisma/schema.prisma 2>/dev/null || echo "Migrations up to date"
 npm run build --workspace=apps/web

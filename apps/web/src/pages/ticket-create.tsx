@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import api from '../lib/api';
 import { Button } from '../components/ui/button';
@@ -18,6 +19,7 @@ import AppLayout from '../components/app-layout';
 const TICKET_TYPES = ['INCIDENT', 'SERVICE_REQUEST', 'PROBLEM', 'CHANGE_REQUEST'];
 
 function RelatedArticles({ query }: { query: string }) {
+  const { t } = useTranslation(['common', 'page']);
   const { data, isLoading } = useQuery({
     queryKey: ['kb-suggest', query],
     queryFn: async () => {
@@ -32,7 +34,7 @@ function RelatedArticles({ query }: { query: string }) {
 
   return (
     <div className="rounded-lg border border-blue-100 bg-blue-50 p-3">
-      <p className="mb-1.5 text-xs font-medium text-blue-700">Related articles that might help:</p>
+      <p className="mb-1.5 text-xs font-medium text-blue-700">{t('page.knowledgeBase')}</p>
       <div className="flex flex-wrap gap-1.5">
         {data.map((a) => (
           <a
@@ -50,6 +52,7 @@ function RelatedArticles({ query }: { query: string }) {
 }
 
 export default function CreateTicketPage() {
+  const { t } = useTranslation(['common', 'ticket', 'page']);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [subject, setSubject] = useState('');
@@ -125,7 +128,7 @@ export default function CreateTicketPage() {
       navigate('/tickets');
     },
     onError: (err: any) => {
-      const msg = err.response?.data?.message || 'Failed to create ticket';
+      const msg = err.response?.data?.message || t('common.error');
       const lower = msg.toLowerCase();
       if (lower.includes('subject')) setErrors((prev) => ({ ...prev, subject: msg }));
       else if (lower.includes('description')) setErrors((prev) => ({ ...prev, description: msg }));
@@ -138,8 +141,9 @@ export default function CreateTicketPage() {
     setErrors({});
     setGeneralError('');
     const fieldErrors: Record<string, string> = {};
-    if (!subject || subject.length < 3) fieldErrors.subject = 'At least 3 characters';
-    if (!description || description.length < 10) fieldErrors.description = 'At least 10 characters';
+    if (!subject || subject.length < 3) fieldErrors.subject = t('common.subjectMinError');
+    if (!description || description.length < 10)
+      fieldErrors.description = t('common.descriptionMinError');
     if (Object.keys(fieldErrors).length > 0) {
       setErrors(fieldErrors);
       return;
@@ -151,7 +155,7 @@ export default function CreateTicketPage() {
     <AppLayout>
       <Card className="max-w-2xl">
         <CardHeader>
-          <CardTitle>New ticket</CardTitle>
+          <CardTitle>{t('page.createTicket')}</CardTitle>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -162,17 +166,17 @@ export default function CreateTicketPage() {
             {templates && templates.length > 0 && (
               <div>
                 <label className="mb-1 block text-sm font-medium text-slate-700">
-                  Use template (optional)
+                  {t('common.useTemplateOptional')}
                 </label>
                 <Select value={selectedTemplate} onValueChange={setSelectedTemplate}>
                   <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select template..." />
+                    <SelectValue placeholder={t('common.selectTemplate')} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">No template</SelectItem>
-                    {templates.map((t) => (
-                      <SelectItem key={t.id} value={t.id}>
-                        {t.name}
+                    <SelectItem value="">{t('common.noTemplate')}</SelectItem>
+                    {templates.map((tmpl) => (
+                      <SelectItem key={tmpl.id} value={tmpl.id}>
+                        {tmpl.name}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -181,7 +185,9 @@ export default function CreateTicketPage() {
             )}
 
             <div>
-              <label className="mb-1 block text-sm font-medium text-slate-700">Subject</label>
+              <label className="mb-1 block text-sm font-medium text-slate-700">
+                {t('ticket.subject')}
+              </label>
               <Input
                 value={subject}
                 onChange={(e) => setSubject(e.target.value)}
@@ -193,7 +199,9 @@ export default function CreateTicketPage() {
             <RelatedArticles query={subject} />
 
             <div>
-              <label className="mb-1 block text-sm font-medium text-slate-700">Description</label>
+              <label className="mb-1 block text-sm font-medium text-slate-700">
+                {t('ticket.description')}
+              </label>
               <Textarea
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
@@ -205,34 +213,38 @@ export default function CreateTicketPage() {
               )}
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div>
-                <label className="mb-1 block text-sm font-medium text-slate-700">Type</label>
+                <label className="mb-1 block text-sm font-medium text-slate-700">
+                  {t('ticket.type')}
+                </label>
                 <Select value={type} onValueChange={setType}>
                   <SelectTrigger className="w-full">
-                    <SelectValue placeholder="No type" />
+                    <SelectValue placeholder={t('common.noType')} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">No type</SelectItem>
-                    {TICKET_TYPES.map((t) => (
-                      <SelectItem key={t} value={t}>
-                        {t.replace('_', ' ')}
+                    <SelectItem value="">{t('common.noType')}</SelectItem>
+                    {TICKET_TYPES.map((ticketType) => (
+                      <SelectItem key={ticketType} value={ticketType}>
+                        {ticketType.replace('_', ' ')}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
               <div>
-                <label className="mb-1 block text-sm font-medium text-slate-700">Priority</label>
+                <label className="mb-1 block text-sm font-medium text-slate-700">
+                  {t('ticket.priority')}
+                </label>
                 <Select value={priority} onValueChange={setPriority}>
                   <SelectTrigger className="w-full">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="LOW">Low</SelectItem>
-                    <SelectItem value="MEDIUM">Medium</SelectItem>
-                    <SelectItem value="HIGH">High</SelectItem>
-                    <SelectItem value="URGENT">Urgent</SelectItem>
+                    <SelectItem value="LOW">{t('common.low')}</SelectItem>
+                    <SelectItem value="MEDIUM">{t('common.medium')}</SelectItem>
+                    <SelectItem value="HIGH">{t('common.high')}</SelectItem>
+                    <SelectItem value="URGENT">{t('common.urgent')}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -240,7 +252,9 @@ export default function CreateTicketPage() {
 
             {tags && tags.length > 0 && (
               <div>
-                <label className="mb-1 block text-sm font-medium text-slate-700">Tags</label>
+                <label className="mb-1 block text-sm font-medium text-slate-700">
+                  {t('ticket.tags')}
+                </label>
                 <div className="flex flex-wrap gap-1.5">
                   {tags.map((tag) => (
                     <button
@@ -267,7 +281,7 @@ export default function CreateTicketPage() {
 
             <div>
               <label className="mb-1 block text-sm font-medium text-slate-700">
-                Attachments (optional)
+                {t('common.attachmentsOptional')}
               </label>
               <div className="flex flex-wrap gap-2">
                 <input
@@ -293,7 +307,7 @@ export default function CreateTicketPage() {
             </div>
 
             <Button type="submit" disabled={mutation.isPending}>
-              {mutation.isPending ? 'Creating...' : 'Create ticket'}
+              {mutation.isPending ? t('common.creatingTicket') : t('common.createTicket')}
             </Button>
           </form>
         </CardContent>

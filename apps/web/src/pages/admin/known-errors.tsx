@@ -1,3 +1,4 @@
+import { Trans, useTranslation } from 'react-i18next';
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../../lib/api';
@@ -16,9 +17,20 @@ import { Skeleton } from '../../components/ui/skeleton';
 import EmptyState from '../../components/empty-state';
 import { Plus, Pencil, Trash2 } from 'lucide-react';
 
+interface KnownError {
+  id: string;
+  subject: string;
+  description: string;
+  workaround: string;
+  solution: string;
+  category: string;
+  severity: string;
+}
+
 export default function AdminKnownErrorsPage() {
+  const { t } = useTranslation(['common', 'page']);
   const qc = useQueryClient();
-  const [editing, setEditing] = useState<any>(null);
+  const [editing, setEditing] = useState<KnownError | null>(null);
   const [showCreate, setShowCreate] = useState(false);
   const [form, setForm] = useState({
     subject: '',
@@ -33,12 +45,19 @@ export default function AdminKnownErrorsPage() {
     queryKey: ['admin-known-errors'],
     queryFn: async () => {
       const r = await api.get('/known-errors');
-      return r.data.data;
+      return r.data.data as KnownError[];
     },
   });
 
   const create = useMutation({
-    mutationFn: (body: any) => api.post('/known-errors', body),
+    mutationFn: (body: {
+      subject: string;
+      description: string;
+      workaround: string;
+      solution: string;
+      category: string;
+      severity: string;
+    }) => api.post('/known-errors', body),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['admin-known-errors'] });
       setShowCreate(false);
@@ -54,7 +73,16 @@ export default function AdminKnownErrorsPage() {
   });
 
   const update = useMutation({
-    mutationFn: ({ id, ...body }: any) => api.patch(`/known-errors/${id}`, body),
+    mutationFn: ({
+      id,
+      ...body
+    }: {
+      id: string;
+      subject: string;
+      description: string;
+      workaround: string;
+      solution: string;
+    }) => api.patch(`/known-errors/${id}`, body),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['admin-known-errors'] });
       setEditing(null);
@@ -69,53 +97,53 @@ export default function AdminKnownErrorsPage() {
   return (
     <AdminLayout>
       <div className="mb-4 flex items-center justify-between">
-        <h2 className="text-xl font-semibold text-slate-900">Known Errors</h2>
+        <h2 className="text-xl font-semibold text-slate-900">{t('Known Errors')}</h2>
         <Dialog open={showCreate} onOpenChange={setShowCreate}>
           <DialogTrigger asChild>
             <Button size="sm">
               <Plus className="mr-1 h-4 w-4" />
-              Create
+              {t('Create')}
             </Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>New Known Error</DialogTitle>
+              <DialogTitle>{t('New Known Error')}</DialogTitle>
             </DialogHeader>
             <div className="flex flex-col gap-3">
               <Input
-                placeholder="Subject"
+                placeholder={t('Subject')}
                 value={form.subject}
                 onChange={(e) => setForm({ ...form, subject: e.target.value })}
               />
               <textarea
                 className="rounded-md border border-slate-200 p-2 text-sm"
                 rows={3}
-                placeholder="Description"
+                placeholder={t('Description')}
                 value={form.description}
                 onChange={(e) => setForm({ ...form, description: e.target.value })}
               />
               <Input
-                placeholder="Workaround"
+                placeholder={t('Workaround')}
                 value={form.workaround}
                 onChange={(e) => setForm({ ...form, workaround: e.target.value })}
               />
               <Input
-                placeholder="Solution"
+                placeholder={t('Solution')}
                 value={form.solution}
                 onChange={(e) => setForm({ ...form, solution: e.target.value })}
               />
               <Input
-                placeholder="Category"
+                placeholder={t('Category')}
                 value={form.category}
                 onChange={(e) => setForm({ ...form, category: e.target.value })}
               />
               <Input
-                placeholder="Severity"
+                placeholder={t('Severity')}
                 value={form.severity}
                 onChange={(e) => setForm({ ...form, severity: e.target.value })}
               />
               <Button onClick={() => create.mutate(form)} disabled={create.isPending}>
-                Create
+                {t('Create')}
               </Button>
             </div>
           </DialogContent>
@@ -125,16 +153,16 @@ export default function AdminKnownErrorsPage() {
       {isLoading && <Skeleton className="h-64 w-full" />}
       {data && data.length === 0 && (
         <EmptyState
-          title="No known errors"
-          message="Known errors appear here when logged."
+          title={t('No known errors')}
+          message={t('Known errors appear here when logged.')}
           action={
             <Button size="sm" onClick={() => setShowCreate(true)}>
-              Create known error
+              {t('Create known error')}
             </Button>
           }
         />
       )}
-      {data?.map((ke: any) => (
+      {data?.map((ke: KnownError) => (
         <Card key={ke.id} className="mb-2">
           <CardContent className="flex items-start justify-between p-4">
             <div className="min-w-0 flex-1">
@@ -144,7 +172,9 @@ export default function AdminKnownErrorsPage() {
               </div>
               <p className="text-xs text-slate-500 line-clamp-1">{ke.description}</p>
               {ke.workaround && (
-                <p className="text-xs text-blue-600">Workaround: {ke.workaround}</p>
+                <p className="text-xs text-blue-600">
+                  {t('Workaround')}: {ke.workaround}
+                </p>
               )}
             </div>
             <div className="flex gap-1 shrink-0 ml-2">
@@ -167,7 +197,7 @@ export default function AdminKnownErrorsPage() {
       >
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Edit Known Error</DialogTitle>
+            <DialogTitle>{t('Edit Known Error')}</DialogTitle>
           </DialogHeader>
           {editing && (
             <div className="flex flex-col gap-3">
@@ -183,12 +213,12 @@ export default function AdminKnownErrorsPage() {
               />
               <Input
                 defaultValue={editing.workaround || ''}
-                placeholder="Workaround"
+                placeholder={t('Workaround')}
                 onChange={(e) => setEditing({ ...editing, workaround: e.target.value })}
               />
               <Input
                 defaultValue={editing.solution || ''}
-                placeholder="Solution"
+                placeholder={t('Solution')}
                 onChange={(e) => setEditing({ ...editing, solution: e.target.value })}
               />
               <Button
@@ -203,7 +233,7 @@ export default function AdminKnownErrorsPage() {
                 }
                 disabled={update.isPending}
               >
-                Save
+                {t('Save')}
               </Button>
             </div>
           )}

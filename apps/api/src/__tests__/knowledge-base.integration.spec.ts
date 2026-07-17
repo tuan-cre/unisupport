@@ -1,57 +1,44 @@
-import { mockPrisma, mockNotifications, createTestJwt, setup } from './setup';
+import { PrismaService } from '../prisma/prisma.service';
+import { setup, createTestJwt } from './setup.integration';
 import type { INestApplication } from '@nestjs/common';
 
 describe('KbController (integration)', () => {
   let nestApp: INestApplication;
   let api: any;
+  let prisma: PrismaService;
   const token = createTestJwt();
-
-  const mockArticle = {
-    id: 'art-1',
-    slug: 'how-to-reset',
-    title: 'How to Reset Password',
-    content: 'Go to settings and click reset.',
-    published: true,
-    categoryId: 'cat-1',
-    createdById: 'user-1',
-    viewCount: 0,
-    helpful: 0,
-    notHelpful: 0,
-    category: { id: 'cat-1', name: 'Getting Started' },
-    createdBy: { id: 'user-1', firstName: 'Admin', lastName: 'User' },
-  };
 
   beforeAll(async () => {
     const result = await setup();
     nestApp = result.app;
     api = result.api;
+    prisma = result.prisma;
   });
 
   afterAll(async () => {
     await nestApp.close();
   });
 
-  beforeEach(() => {
-    jest.clearAllMocks();
-    mockPrisma.article.findMany.mockResolvedValue([mockArticle]);
-    mockPrisma.article.findUnique.mockResolvedValue(mockArticle);
-    mockPrisma.articleCategory.findMany.mockResolvedValue([
-      { id: 'cat-1', name: 'Getting Started', slug: 'getting-started', _count: { articles: 1 } },
-    ]);
-    mockPrisma.article.create.mockResolvedValue({
-      ...mockArticle,
-      id: 'art-new',
-      title: 'New Article',
-      slug: 'new-article',
-      category: { id: 'cat-1', name: 'Getting Started' },
-    });
-    mockPrisma.article.findUnique.mockResolvedValueOnce(null);
-    mockPrisma.article.findUnique.mockResolvedValue(mockArticle);
+  beforeEach(async () => {
+    await prisma.article.deleteMany();
   });
+
+  const createArticle = (overrides?: any) => {
+    return prisma.article.create({
+      data: {
+        title: 'How to Reset Password',
+        slug: 'how-to-reset',
+        content: 'Go to settings and click reset.',
+        published: true,
+        categoryId: 'cat-1',
+        createdById: 'user-1',
+        ...overrides,
+      },
+    });
+  };
 
   it('1. GET /api/kb/articles returns 200 with list', async () => {
     const res = await api.get('/api/kb/articles').expect(200);
-
     expect(res.body.success).toBe(true);
     expect(Array.isArray(res.body.data)).toBe(true);
     expect(res.body.meta).toBeDefined();
@@ -66,20 +53,24 @@ describe('KbController (integration)', () => {
 
     expect(res.body.success).toBe(true);
     expect(res.body.data.title).toBe('Brand New Article');
-    expect(mockPrisma.article.create).toHaveBeenCalled();
+
+    const article = await prisma.article.findFirst({
+      where: { title: 'Brand New Article' },
+    });
+    expect(article).not.toBeNull();
   });
 
   it('3. GET /api/kb/articles/:slug returns article', async () => {
-    mockPrisma.article.update.mockResolvedValue(mockArticle);
+    await createArticle({ slug: 'how-to-reset' });
+
     const res = await api.get('/api/kb/articles/how-to-reset').expect(200);
 
     expect(res.body.success).toBe(true);
     expect(res.body.data.slug).toBe('how-to-reset');
-    expect(mockPrisma.article.findUnique).toHaveBeenCalled();
   });
 
   it('4. PATCH /api/kb/admin/articles/:id updates with auth', async () => {
-    mockPrisma.article.update.mockResolvedValue({ ...mockArticle, title: 'Updated Title' });
+    await createArticle({ id: 'art-1', title: 'Original Title' });
 
     const res = await api
       .patch('/api/kb/admin/articles/art-1')
@@ -88,20 +79,20 @@ describe('KbController (integration)', () => {
       .expect(200);
 
     expect(res.body.success).toBe(true);
-    expect(mockPrisma.article.update).toHaveBeenCalled();
+    expect(res.body.data.title).toBe('Updated Title');
+
+    const article = await prisma.article.findUnique({ where: { id: 'art-1' } });
+    expect(article?.title).toBe('Updated Title');
   });
 
   it('5. GET /api/kb/articles/search?q=foo returns filtered results', async () => {
-    mockPrisma.article.findMany.mockResolvedValue([mockArticle]);
+    await createArticle({ title: 'How to Reset', content: 'Article content.' });
 
     const res = await api.get('/api/kb/articles/search?q=reset').expect(200);
 
     expect(res.body.success).toBe(true);
-    expect(mockPrisma.article.findMany).toHaveBeenCalledWith(
-      expect.objectContaining({
-        where: expect.objectContaining({ published: true }),
-      }),
-    );
+    const data = res.body.data as any[];
+    expect(data.some((a) => a.title.toLowerCase().includes('reset'))).toBe(true);
   });
 
   it('6. POST /api/kb/admin/articles returns error with missing title', async () => {
@@ -109,6 +100,6 @@ describe('KbController (integration)', () => {
       .post('/api/kb/admin/articles')
       .set('Authorization', `Bearer ${token}`)
       .send({ content: 'No title provided - should be rejected.' })
-      .expect((r: any) => expect([400, 401, 403]).toContain(r.status));
+      .expect((r) => expect([400, 401, 403]).toContain(r.status));
   });
 });

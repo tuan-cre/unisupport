@@ -1,5 +1,7 @@
+import ConfirmDialog from './confirm-dialog';
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../hooks/use-auth';
 import { useNotifications } from '../hooks/use-notifications';
 import { Button } from './ui/button';
@@ -11,12 +13,14 @@ import {
   DropdownMenuSeparator,
 } from './ui/dropdown-menu';
 import { User, LogOut, KeyRound, Plus, Bell, Shield, BookOpen, Sun, Moon } from 'lucide-react';
+import { LangSwitch } from './lang-switch';
 
 interface AppLayoutProps {
   children: React.ReactNode;
 }
 
 export default function AppLayout({ children }: AppLayoutProps) {
+  const { t } = useTranslation('common');
   const { user, logout } = useAuth();
   const { notifications, unread, markRead, markAllRead } = useNotifications();
   const navigate = useNavigate();
@@ -62,6 +66,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
           </button>
 
           <div className="flex items-center gap-3">
+            <LangSwitch />
             <button
               onClick={() => setTheme((p) => (p === 'light' ? 'dark' : 'light'))}
               className="rounded-lg p-2 text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
@@ -71,14 +76,13 @@ export default function AppLayout({ children }: AppLayoutProps) {
             </button>
             <Button variant="ghost" size="sm" onClick={() => navigate('/kb')}>
               <BookOpen className="mr-1 h-4 w-4" />
-              KB
+              {t('page.knowledgeBase')}
             </Button>
             <Button variant="outline" size="sm" onClick={() => navigate('/tickets/new')}>
               <Plus className="mr-1 h-4 w-4" />
-              New ticket
+              {t('common.create')} {t('page.tickets').toLowerCase()}
             </Button>
 
-            {/* Notification bell */}
             <div className="relative" ref={notifRef}>
               <button
                 onClick={() => setNotifOpen(!notifOpen)}
@@ -95,20 +99,22 @@ export default function AppLayout({ children }: AppLayoutProps) {
               {notifOpen && (
                 <div className="absolute right-0 z-50 mt-2 w-80 rounded-xl border bg-background shadow-lg">
                   <div className="flex items-center justify-between border-b px-4 py-3">
-                    <span className="text-sm font-semibold text-foreground">Notifications</span>
+                    <span className="text-sm font-semibold text-foreground">
+                      {t('common.notifications')}
+                    </span>
                     {unread > 0 && (
                       <button
                         onClick={markAllRead}
                         className="text-xs text-blue-600 hover:underline"
                       >
-                        Mark all read
+                        {t('common.markAllRead')}
                       </button>
                     )}
                   </div>
                   <div className="max-h-80 overflow-y-auto">
                     {notifications.length === 0 ? (
                       <p className="px-4 py-8 text-center text-sm text-muted-foreground">
-                        No notifications yet
+                        {t('common.noNotificationsYet')}
                       </p>
                     ) : (
                       notifications.slice(0, 10).map((n) => (
@@ -124,7 +130,9 @@ export default function AppLayout({ children }: AppLayoutProps) {
                           }`}
                         >
                           <p className="text-sm font-medium text-foreground">{n.title}</p>
-                          <p className="mt-0.5 text-xs text-muted-foreground line-clamp-2">{n.message}</p>
+                          <p className="mt-0.5 text-xs text-muted-foreground line-clamp-2">
+                            {n.message}
+                          </p>
                         </button>
                       ))
                     )}
@@ -149,23 +157,23 @@ export default function AppLayout({ children }: AppLayoutProps) {
                   <>
                     <DropdownMenuItem onClick={() => navigate('/admin/users')}>
                       <Shield className="mr-2 h-4 w-4" />
-                      Admin panel
+                      {t('common.adminPanel')}
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                   </>
                 )}
                 <DropdownMenuItem onClick={() => navigate('/profile')}>
                   <User className="mr-2 h-4 w-4" />
-                  Profile
+                  {t('common.profile')}
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => navigate('/change-password')}>
                   <KeyRound className="mr-2 h-4 w-4" />
-                  Change password
+                  {t('page.changePassword')}
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={() => setShowLogoutConfirm(true)}>
                   <LogOut className="mr-2 h-4 w-4" />
-                  Logout
+                  {t('nav.logout')}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -177,9 +185,9 @@ export default function AppLayout({ children }: AppLayoutProps) {
         open={showLogoutConfirm}
         onOpenChange={setShowLogoutConfirm}
         onConfirm={handleLogout}
-        title="Logout?"
-        description="Are you sure you want to log out?"
-        confirmLabel="Logout"
+        title={t('common.logoutConfirm')}
+        description={t('common.logoutDesc')}
+        confirmLabel={t('nav.logout')}
       />
 
       <main className="mx-auto max-w-5xl px-6 py-8">{children}</main>

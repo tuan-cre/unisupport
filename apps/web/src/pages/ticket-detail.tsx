@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import api from '../lib/api';
 import { useAuth } from '../hooks/use-auth';
 import { Button } from '../components/ui/button';
+import { Textarea } from '../components/ui/textarea';
 import { Input } from '../components/ui/input';
 import { Badge } from '../components/ui/badge';
 import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/card';
@@ -16,12 +18,14 @@ import {
 } from '../components/ui/select';
 import { Skeleton } from '../components/ui/skeleton';
 import AppLayout from '../components/app-layout';
+import CsatSurvey from '../components/csat-survey';
 import { ArrowLeft, Eye, Clock, Link2, History } from 'lucide-react';
 
 const statusOptions = ['OPEN', 'IN_PROGRESS', 'PENDING', 'RESOLVED', 'CLOSED'];
 const TABS = ['Comments', 'History', 'Watchers', 'Relations', 'Time'] as const;
 
 export default function TicketDetailPage() {
+  const { t } = useTranslation(['common', 'ticket', 'page']);
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -132,7 +136,7 @@ export default function TicketDetailPage() {
   if (!ticket) {
     return (
       <AppLayout>
-        <p className="text-slate-500">Ticket not found.</p>
+        <p className="text-slate-500">{t('common.noTickets')}</p>
       </AppLayout>
     );
   }
@@ -148,36 +152,37 @@ export default function TicketDetailPage() {
             className="flex items-center gap-2 text-sm text-slate-500 hover:text-slate-900 transition-colors"
           >
             <ArrowLeft className="h-4 w-4" />
-            Back
+            {t('common.backToTickets')}
           </button>
           <span className="text-sm text-slate-400">#{ticket.id.slice(0, 8)}</span>
         </div>
       </header>
 
       <main className="mx-auto max-w-4xl space-y-6 px-6 py-8">
-        {/* Main ticket card */}
         <Card>
           <CardContent className="p-6">
             <div className="mb-4 flex items-start justify-between">
               <div className="flex-1">
                 <h2 className="text-xl font-semibold text-slate-900">{ticket.subject}</h2>
                 <p className="mt-1 text-sm text-slate-500">
-                  Created {new Date(ticket.createdAt).toLocaleString()} by{' '}
-                  {ticket.requester.firstName} {ticket.requester.lastName}
+                  {t('common.created')} {new Date(ticket.createdAt).toLocaleString()}{' '}
+                  {t('common.by')} {ticket.requester.firstName} {ticket.requester.lastName}
                 </p>
               </div>
-              <Select value={ticket.status} onValueChange={(v) => statusMutation.mutate(v)}>
-                <SelectTrigger className="w-40">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {statusOptions.map((s) => (
-                    <SelectItem key={s} value={s}>
-                      {s.replace('_', ' ')}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              {isAdminOrAgent && (
+                <Select value={ticket.status} onValueChange={(v) => statusMutation.mutate(v)}>
+                  <SelectTrigger className="w-40">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {statusOptions.map((s) => (
+                      <SelectItem key={s} value={s}>
+                        {s.replace('_', ' ')}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
             </div>
 
             <div className="mb-3 flex flex-wrap gap-2 text-sm">
@@ -185,12 +190,12 @@ export default function TicketDetailPage() {
                 {ticket.status.replace('_', ' ')}
               </Badge>
               <span className="text-xs font-medium text-slate-500">
-                Priority: {ticket.priority}
+                {t('ticket.priority')}: {ticket.priority}
               </span>
               {ticket.type && <Badge variant="outline">{ticket.type.replace('_', ' ')}</Badge>}
               {ticket.assignee && (
                 <span className="text-xs text-slate-500">
-                  Assigned to: {ticket.assignee.firstName} {ticket.assignee.lastName}
+                  {t('ticket.assignee')}: {ticket.assignee.firstName} {ticket.assignee.lastName}
                 </span>
               )}
               {ticket.department && (
@@ -198,120 +203,12 @@ export default function TicketDetailPage() {
               )}
             </div>
 
-            {ticket.tags?.length > 0 && (
-              <div className="mb-3 flex flex-wrap gap-1.5">
-                {ticket.tags.map((tt: any) => (
-                  <Badge key={tt.tag.id} variant="secondary" className="text-xs">
-                    {tt.tag.name}
-                  </Badge>
-                ))}
-              </div>
-            )}
-
-            {/* SLA Status */}
-            {ticket.sla && ticket.slaStatus && (
-              <div className="mb-4 rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm">
-                <div className="mb-1 flex items-center gap-2 font-medium text-slate-900">
-                  <Clock className="h-4 w-4" />
-                  SLA: {ticket.sla.name}
-                </div>
-                <div className="grid grid-cols-2 gap-2 text-xs">
-                  <div>
-                    <span className="text-slate-500">Response: </span>
-                    <span
-                      className={
-                        ticket.slaStatus.responseBreached
-                          ? 'text-red-600 font-medium'
-                          : 'text-green-600'
-                      }
-                    >
-                      {ticket.slaStatus.firstResponseAt
-                        ? ticket.slaStatus.responseBreached
-                          ? 'Breached'
-                          : 'Met'
-                        : ticket.slaStatus.responseRemainingMs !== null
-                          ? `${Math.ceil(ticket.slaStatus.responseRemainingMs / 60000)}m remaining`
-                          : 'Overdue'}
-                    </span>
-                    <span className="text-slate-400"> ({ticket.sla.responseTime}m)</span>
-                  </div>
-                  <div>
-                    <span className="text-slate-500">Resolution: </span>
-                    <span
-                      className={
-                        ticket.slaStatus.resolutionBreached
-                          ? 'text-red-600 font-medium'
-                          : ticket.status === 'RESOLVED' || ticket.status === 'CLOSED'
-                            ? 'text-green-600'
-                            : 'text-slate-600'
-                      }
-                    >
-                      {ticket.resolvedAt || ticket.closedAt
-                        ? ticket.slaStatus.resolutionBreached
-                          ? 'Breached'
-                          : 'Met'
-                        : ticket.slaStatus.resolutionRemainingMs !== null
-                          ? `${Math.ceil(ticket.slaStatus.resolutionRemainingMs / 60000)}m remaining`
-                          : 'Overdue'}
-                    </span>
-                    <span className="text-slate-400"> ({ticket.sla.resolutionTime}m)</span>
-                  </div>
-                </div>
-              </div>
-            )}
-
             <p className="whitespace-pre-wrap text-sm text-slate-700">{ticket.description}</p>
-
-            {/* Attachments */}
-            {ticket.attachments?.length > 0 && (
-              <div className="mt-4 border-t pt-4">
-                <p className="mb-2 text-sm font-medium text-slate-700">
-                  Attachments ({ticket.attachments.length})
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  {ticket.attachments.map((a: any) => (
-                    <a
-                      key={a.id}
-                      href={`/api/files/${a.id}`}
-                      target="_blank"
-                      className="flex items-center gap-1.5 rounded-lg border bg-slate-50 px-3 py-1.5 text-xs text-slate-700 hover:bg-slate-100 transition-colors"
-                    >
-                      {a.mimeType.startsWith('image/') ? '🖼' : '📎'}
-                      {a.originalName}
-                      <span className="text-slate-400">({(a.size / 1024).toFixed(1)} KB)</span>
-                    </a>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Upload button */}
-            {isAdminOrAgent && (
-              <div className="mt-3">
-                <label className="inline-flex cursor-pointer items-center gap-1.5 rounded-lg border bg-white px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50 transition-colors">
-                  + Attach file
-                  <input
-                    type="file"
-                    className="hidden"
-                    onChange={async (e) => {
-                      const file = e.target.files?.[0];
-                      if (!file) return;
-                      const form = new FormData();
-                      form.append('file', file);
-                      await api.post(`/tickets/${id}/attachments`, form, {
-                        headers: { 'Content-Type': 'multipart/form-data' },
-                      });
-                      queryClient.invalidateQueries({ queryKey: ['ticket', id] });
-                      e.target.value = '';
-                    }}
-                  />
-                </label>
-              </div>
-            )}
           </CardContent>
         </Card>
 
-        {/* Tabs */}
+        <CsatSurvey ticketId={ticket.id} rating={ticket.myRating ?? undefined} />
+
         <Card>
           <div className="flex border-b">
             {TABS.map((tab) => (
@@ -324,22 +221,27 @@ export default function TicketDetailPage() {
                     : 'text-slate-500 hover:text-slate-700'
                 }`}
               >
-                {tab}
+                {tab === 'Comments' && t('ticket.comments')}
+                {tab === 'History' && t('ticket.history')}
+                {tab === 'Watchers' && t('ticket.watchers')}
+                {tab === 'Relations' && t('ticket.relations')}
+                {tab === 'Time' && t('ticket.time')}
               </button>
             ))}
           </div>
 
-          {/* Comments tab */}
           {activeTab === 'Comments' && (
             <CardContent className="p-6">
               <div className="mb-4 space-y-4">
                 {ticket.comments?.length === 0 && (
-                  <p className="text-sm text-slate-400">No comments yet.</p>
+                  <p className="text-sm text-slate-400">{t('common.noComments')}</p>
                 )}
                 {ticket.comments?.map((c: any) => (
                   <div
                     key={c.id}
-                    className={`rounded-lg p-3 ${c.isInternal ? 'border border-amber-200 bg-amber-50' : 'bg-slate-50'}`}
+                    className={`rounded-lg p-3 ${
+                      c.isInternal ? 'border border-amber-200 bg-amber-50' : 'bg-slate-50'
+                    }`}
                   >
                     <div className="flex items-center gap-2">
                       <p className="text-xs text-slate-500">
@@ -348,7 +250,7 @@ export default function TicketDetailPage() {
                       </p>
                       {c.isInternal && (
                         <Badge variant="outline" className="text-[10px] px-1 py-0">
-                          Internal
+                          {t('common.internalNote')}
                         </Badge>
                       )}
                     </div>
@@ -365,10 +267,11 @@ export default function TicketDetailPage() {
                 }}
                 className="space-y-2"
               >
-                <Input
+                <Textarea
                   value={newComment}
                   onChange={(e) => setNewComment(e.target.value)}
-                  placeholder="Add a comment..."
+                  placeholder={t('ticket.comments')}
+                  rows={3}
                   required
                 />
                 <div className="flex items-center justify-between">
@@ -380,22 +283,21 @@ export default function TicketDetailPage() {
                         onChange={(e) => setIsInternal(e.target.checked)}
                         className="h-4 w-4 rounded border-slate-300"
                       />
-                      Internal note
+                      {t('common.internalNote')}
                     </label>
                   )}
                   <Button type="submit" disabled={commentMutation.isPending}>
-                    {commentMutation.isPending ? 'Sending...' : 'Send'}
+                    {commentMutation.isPending ? t('common.sendingComment') : t('common.send')}
                   </Button>
                 </div>
               </form>
             </CardContent>
           )}
 
-          {/* History tab */}
           {activeTab === 'History' && (
             <CardContent className="p-6">
               {ticket.history?.length === 0 && (
-                <p className="text-sm text-slate-400">No history yet.</p>
+                <p className="text-sm text-slate-400">{t('common.noHistory')}</p>
               )}
               <div className="space-y-3">
                 {ticket.history?.map((h: any) => (
@@ -406,17 +308,17 @@ export default function TicketDetailPage() {
                         <span className="font-medium text-slate-900">
                           {h.user.firstName} {h.user.lastName}
                         </span>{' '}
-                        changed <span className="font-medium">{h.field}</span>
+                        {t('common.changed')} <span className="font-medium">{h.field}</span>
                         {h.oldValue && (
                           <span>
                             {' '}
-                            from "<span className="text-slate-500">{h.oldValue}</span>"
+                            {t('common.from')} "{h.oldValue}"
                           </span>
                         )}
                         {h.newValue && (
                           <span>
                             {' '}
-                            to "<span className="text-slate-500">{h.newValue}</span>"
+                            {t('common.to')} "{h.newValue}"
                           </span>
                         )}
                       </p>
@@ -430,7 +332,6 @@ export default function TicketDetailPage() {
             </CardContent>
           )}
 
-          {/* Watchers tab */}
           {activeTab === 'Watchers' && isAdminOrAgent && (
             <CardContent className="p-6">
               <div className="mb-4 flex gap-2">
@@ -439,7 +340,7 @@ export default function TicketDetailPage() {
                   onChange={(e) => setWatcherUserId(e.target.value)}
                   className="flex-1 rounded-lg border border-slate-300 px-3 py-2 text-sm"
                 >
-                  <option value="">Select user to add...</option>
+                  <option value="">{t('common.selectUserToAdd')}</option>
                   {users?.map((u) => (
                     <option key={u.id} value={u.id}>
                       {u.firstName} {u.lastName}
@@ -450,12 +351,12 @@ export default function TicketDetailPage() {
                   onClick={() => watcherUserId && addWatcherMutation.mutate(watcherUserId)}
                   disabled={!watcherUserId}
                 >
-                  Add
+                  {t('common.add')}
                 </Button>
               </div>
 
               {ticket.watchers?.length === 0 && (
-                <p className="text-sm text-slate-400">No watchers.</p>
+                <p className="text-sm text-slate-400">{t('common.noWatchers')}</p>
               )}
               <div className="space-y-2">
                 {ticket.watchers?.map((w: any) => (
@@ -471,7 +372,7 @@ export default function TicketDetailPage() {
                       size="sm"
                       onClick={() => removeWatcherMutation.mutate(w.user.id)}
                     >
-                      Remove
+                      {t('common.remove')}
                     </Button>
                   </div>
                 ))}
@@ -479,7 +380,6 @@ export default function TicketDetailPage() {
             </CardContent>
           )}
 
-          {/* Relations tab */}
           {activeTab === 'Relations' && (
             <CardContent className="p-6">
               {isAdminOrAgent && (
@@ -487,19 +387,19 @@ export default function TicketDetailPage() {
                   <Input
                     value={relationTicketId}
                     onChange={(e) => setRelationTicketId(e.target.value)}
-                    placeholder="Enter ticket ID..."
+                    placeholder={t('common.enterTicketId')}
                   />
                   <Button
                     onClick={() => relationTicketId && addRelationMutation.mutate(relationTicketId)}
                     disabled={!relationTicketId}
                   >
-                    Link
+                    {t('common.link')}
                   </Button>
                 </div>
               )}
 
               {!ticket.relatedFrom?.length && !ticket.relatedTo?.length && (
-                <p className="text-sm text-slate-400">No related tickets.</p>
+                <p className="text-sm text-slate-400">{t('common.noRelatedTickets')}</p>
               )}
               <div className="space-y-2">
                 {ticket.relatedFrom?.map((r: any) => (
@@ -523,7 +423,7 @@ export default function TicketDetailPage() {
                         size="sm"
                         onClick={() => removeRelationMutation.mutate(r.id)}
                       >
-                        Unlink
+                        {t('common.unlink')}
                       </Button>
                     )}
                   </div>
@@ -549,7 +449,7 @@ export default function TicketDetailPage() {
                         size="sm"
                         onClick={() => removeRelationMutation.mutate(r.id)}
                       >
-                        Unlink
+                        {t('common.unlink')}
                       </Button>
                     )}
                   </div>
@@ -558,7 +458,6 @@ export default function TicketDetailPage() {
             </CardContent>
           )}
 
-          {/* Time tab */}
           {activeTab === 'Time' && (
             <CardContent className="p-6">
               {isAdminOrAgent && (
@@ -577,23 +476,23 @@ export default function TicketDetailPage() {
                     max="1440"
                     value={timeMinutes}
                     onChange={(e) => setTimeMinutes(e.target.value)}
-                    placeholder="Minutes"
+                    placeholder={t('common.minutes')}
                     className="w-28"
                   />
                   <Input
                     value={timeDesc}
                     onChange={(e) => setTimeDesc(e.target.value)}
-                    placeholder="Description (optional)"
+                    placeholder={t('common.descriptionOptional')}
                     className="flex-1"
                   />
                   <Button type="submit" disabled={addTimeMutation.isPending || !timeMinutes}>
-                    Log
+                    {t('common.log')}
                   </Button>
                 </form>
               )}
 
               {ticket.timeEntries?.length === 0 && (
-                <p className="text-sm text-slate-400">No time entries.</p>
+                <p className="text-sm text-slate-400">{t('common.noTimeEntries')}</p>
               )}
               <div className="space-y-2">
                 {ticket.timeEntries?.map((e: any) => (
@@ -606,7 +505,7 @@ export default function TicketDetailPage() {
                         <Clock className="h-4 w-4 text-slate-400" />
                         <span className="text-sm font-medium text-slate-900">{e.minutes}m</span>
                         <span className="text-xs text-slate-500">
-                          by {e.user.firstName} {e.user.lastName}
+                          {t('common.by')} {e.user.firstName} {e.user.lastName}
                         </span>
                       </div>
                       {e.description && (
@@ -620,8 +519,9 @@ export default function TicketDetailPage() {
                 ))}
                 {ticket.timeEntries?.length > 0 && (
                   <p className="pt-2 text-sm font-medium text-slate-900">
-                    Total: {ticket.timeEntries.reduce((sum: number, e: any) => sum + e.minutes, 0)}{' '}
-                    minutes
+                    {t('common.total')}:{' '}
+                    {ticket.timeEntries.reduce((sum: number, e: any) => sum + e.minutes, 0)}{' '}
+                    {t('common.minutes')}
                   </p>
                 )}
               </div>

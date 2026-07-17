@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../../lib/api';
@@ -16,6 +17,52 @@ import {
 import { Skeleton } from '../../components/ui/skeleton';
 import { Plus, Pencil, Trash2, Undo2 } from 'lucide-react';
 
+interface Asset {
+  id: string;
+  name: string;
+  type: string;
+  status: string;
+  serialNumber?: string;
+  model?: string;
+  manufacturer?: string;
+  notes?: string;
+  assignments?: Assignment[];
+  checkouts?: Checkout[];
+  licenses?: License[];
+}
+
+interface Assignment {
+  id: string;
+  returnedAt?: string;
+  user: { id: string; firstName: string; lastName: string };
+}
+
+interface Checkout {
+  id: string;
+  returnedAt?: string;
+  user: { id: string; firstName: string; lastName: string };
+}
+
+interface License {
+  id: string;
+  name: string;
+  key?: string;
+  seats: number;
+  usedSeats: number;
+  vendor?: string;
+  expirationDate?: string;
+  notes?: string;
+}
+
+interface AssetForm {
+  name: string;
+  type: string;
+  serialNumber: string;
+  model: string;
+  manufacturer: string;
+  notes: string;
+}
+
 const statusColors: Record<string, string> = {
   AVAILABLE: 'bg-green-100 text-green-800',
   ASSIGNED: 'bg-blue-100 text-blue-800',
@@ -25,10 +72,11 @@ const statusColors: Record<string, string> = {
 };
 
 export default function AdminAssetsPage() {
+  const { t } = useTranslation(['common', 'page']);
   const qc = useQueryClient();
   const [tab, setTab] = useState<'assets' | 'licenses'>('assets');
   const [showCreate, setShowCreate] = useState(false);
-  const [editing, setEditing] = useState<any>(null);
+  const [editing, setEditing] = useState<Asset | null>(null);
   const [form, setForm] = useState({
     name: '',
     type: 'HARDWARE',
@@ -54,12 +102,12 @@ export default function AdminAssetsPage() {
     queryKey: ['admin-assets'],
     queryFn: async () => {
       const r = await api.get('/assets');
-      return r.data.data;
+      return r.data.data as Asset[];
     },
   });
 
   const create = useMutation({
-    mutationFn: (body: any) => api.post('/assets', body),
+    mutationFn: (body: AssetForm) => api.post('/assets', body),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['admin-assets'] });
       setShowCreate(false);
@@ -75,7 +123,8 @@ export default function AdminAssetsPage() {
   });
 
   const update = useMutation({
-    mutationFn: ({ id, ...body }: any) => api.patch(`/assets/${id}`, body),
+    mutationFn: ({ id, ...body }: { id: string } & Partial<AssetForm>) =>
+      api.patch(`/assets/${id}`, body),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['admin-assets'] });
       setEditing(null);
@@ -97,7 +146,7 @@ export default function AdminAssetsPage() {
   });
 
   const createLic = useMutation({
-    mutationFn: (body: any) => api.post('/assets/licenses', body),
+    mutationFn: (body: Record<string, unknown>) => api.post('/assets/licenses', body),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['admin-assets'] });
       setLicForm({
@@ -114,7 +163,7 @@ export default function AdminAssetsPage() {
   });
 
   const checkout = useMutation({
-    mutationFn: (body: any) => api.post('/assets/checkouts', body),
+    mutationFn: (body: Record<string, unknown>) => api.post('/assets/checkouts', body),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['admin-assets'] }),
   });
 
@@ -127,21 +176,21 @@ export default function AdminAssetsPage() {
     <AdminLayout>
       <div className="mb-4">
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-xl font-semibold text-slate-900">Assets & Inventory</h2>
+          <h2 className="text-xl font-semibold text-slate-900">{t('Assets & Inventory')}</h2>
           <Dialog open={showCreate} onOpenChange={setShowCreate}>
             <DialogTrigger asChild>
               <Button size="sm">
                 <Plus className="mr-1 h-4 w-4" />
-                Add Asset
+                {t('Add Asset')}
               </Button>
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>New Asset</DialogTitle>
+                <DialogTitle>{t('New Asset')}</DialogTitle>
               </DialogHeader>
               <div className="flex flex-col gap-3">
                 <Input
-                  placeholder="Name"
+                  placeholder={t('Name')}
                   value={form.name}
                   onChange={(e) => setForm({ ...form, name: e.target.value })}
                 />
@@ -150,34 +199,34 @@ export default function AdminAssetsPage() {
                   value={form.type}
                   onChange={(e) => setForm({ ...form, type: e.target.value })}
                 >
-                  <option value="HARDWARE">Hardware</option>
-                  <option value="SOFTWARE">Software</option>
-                  <option value="NETWORK">Network</option>
-                  <option value="PERIPHERAL">Peripheral</option>
-                  <option value="OTHER">Other</option>
+                  <option value="HARDWARE">{t('Hardware')}</option>
+                  <option value="SOFTWARE">{t('Software')}</option>
+                  <option value="NETWORK">{t('Network')}</option>
+                  <option value="PERIPHERAL">{t('Peripheral')}</option>
+                  <option value="OTHER">{t('Other')}</option>
                 </select>
                 <Input
-                  placeholder="Serial number"
+                  placeholder={t('Serial number')}
                   value={form.serialNumber}
                   onChange={(e) => setForm({ ...form, serialNumber: e.target.value })}
                 />
                 <Input
-                  placeholder="Model"
+                  placeholder={t('Model')}
                   value={form.model}
                   onChange={(e) => setForm({ ...form, model: e.target.value })}
                 />
                 <Input
-                  placeholder="Manufacturer"
+                  placeholder={t('Manufacturer')}
                   value={form.manufacturer}
                   onChange={(e) => setForm({ ...form, manufacturer: e.target.value })}
                 />
                 <Input
-                  placeholder="Notes"
+                  placeholder={t('Notes')}
                   value={form.notes}
                   onChange={(e) => setForm({ ...form, notes: e.target.value })}
                 />
                 <Button onClick={() => create.mutate(form)} disabled={create.isPending}>
-                  Create
+                  {t('Create')}
                 </Button>
               </div>
             </DialogContent>
@@ -190,14 +239,14 @@ export default function AdminAssetsPage() {
             size="sm"
             onClick={() => setTab('assets')}
           >
-            Assets
+            {t('Assets')}
           </Button>
           <Button
             variant={tab === 'licenses' ? 'default' : 'outline'}
             size="sm"
             onClick={() => setTab('licenses')}
           >
-            Licenses
+            {t('Licenses')}
           </Button>
         </div>
       </div>
@@ -208,13 +257,13 @@ export default function AdminAssetsPage() {
         <>
           <div className="mb-4 flex items-center gap-2">
             <Input
-              placeholder="Asset ID to assign"
+              placeholder={t('Asset ID to assign')}
               value={assignAssetId}
               onChange={(e) => setAssignAssetId(e.target.value)}
               className="w-48"
             />
             <Input
-              placeholder="User ID"
+              placeholder={t('User ID')}
               value={assignUserId}
               onChange={(e) => setAssignUserId(e.target.value)}
               className="w-48"
@@ -224,11 +273,11 @@ export default function AdminAssetsPage() {
               onClick={() => assign.mutate()}
               disabled={!assignAssetId || !assignUserId}
             >
-              Assign
+              {t('Assign')}
             </Button>
           </div>
 
-          {assets?.map((a: any) => (
+          {assets?.map((a: Asset) => (
             <Card key={a.id} className="mb-2">
               <CardContent className="p-4">
                 <div className="flex items-start justify-between">
@@ -240,27 +289,32 @@ export default function AdminAssetsPage() {
                     </div>
                     <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-500">
                       {a.serialNumber && <span>S/N: {a.serialNumber}</span>}
-                      {a.model && <span>Model: {a.model}</span>}
+                      {a.model && (
+                        <span>
+                          {t('Model')}: {a.model}
+                        </span>
+                      )}
                       {a.manufacturer && <span>{a.manufacturer}</span>}
-                      {a.checkouts?.filter((c: any) => !c.returnedAt).length > 0 && (
+                      {(a.checkouts?.filter((c: Checkout) => !c.returnedAt)?.length ?? 0) > 0 && (
                         <span className="text-amber-600">
-                          {a.checkouts.filter((c: any) => !c.returnedAt).length} checked out
+                          {a.checkouts!.filter((c: Checkout) => !c.returnedAt).length}{' '}
+                          {t('checked out')}
                         </span>
                       )}
                     </div>
                     {a.assignments
-                      ?.filter((as: any) => !as.returnedAt)
-                      .map((as: any) => (
+                      ?.filter((as: Assignment) => !as.returnedAt)
+                      .map((as: Assignment) => (
                         <p key={as.id} className="mt-1 text-xs text-blue-600">
-                          Assigned to {as.user.firstName} {as.user.lastName}
+                          {t('Assigned to')} {as.user.firstName} {as.user.lastName}
                         </p>
                       ))}
                     {a.checkouts
-                      ?.filter((c: any) => !c.returnedAt)
-                      .map((c: any) => (
+                      ?.filter((c: Checkout) => !c.returnedAt)
+                      .map((c: Checkout) => (
                         <div key={c.id} className="mt-1 flex items-center gap-2">
                           <span className="text-xs text-amber-600">
-                            Checked out to {c.user.firstName} {c.user.lastName}
+                            {t('Checked out to')} {c.user.firstName} {c.user.lastName}
                           </span>
                           <Button variant="ghost" size="sm" onClick={() => checkin.mutate(c.id)}>
                             <Undo2 className="h-3 w-3" />
@@ -290,54 +344,54 @@ export default function AdminAssetsPage() {
               <DialogTrigger asChild>
                 <Button size="sm">
                   <Plus className="mr-1 h-4 w-4" />
-                  Add License
+                  {t('Add License')}
                 </Button>
               </DialogTrigger>
               <DialogContent>
                 <DialogHeader>
-                  <DialogTitle>New Software License</DialogTitle>
+                  <DialogTitle>{t('New Software License')}</DialogTitle>
                 </DialogHeader>
                 <div className="flex flex-col gap-3">
                   <Input
-                    placeholder="Name"
+                    placeholder={t('Name')}
                     value={licForm.name}
                     onChange={(e) => setLicForm({ ...licForm, name: e.target.value })}
                   />
                   <Input
-                    placeholder="License key"
+                    placeholder={t('License key')}
                     value={licForm.key}
                     onChange={(e) => setLicForm({ ...licForm, key: e.target.value })}
                   />
                   <Input
                     type="number"
-                    placeholder="Total seats"
+                    placeholder={t('Total seats')}
                     value={licForm.seats}
                     onChange={(e) => setLicForm({ ...licForm, seats: Number(e.target.value) })}
                   />
                   <Input
                     type="number"
-                    placeholder="Used seats"
+                    placeholder={t('Used seats')}
                     value={licForm.usedSeats}
                     onChange={(e) => setLicForm({ ...licForm, usedSeats: Number(e.target.value) })}
                   />
                   <Input
-                    placeholder="Vendor"
+                    placeholder={t('Vendor')}
                     value={licForm.vendor}
                     onChange={(e) => setLicForm({ ...licForm, vendor: e.target.value })}
                   />
                   <Input
                     type="date"
-                    placeholder="Expiration"
+                    placeholder={t('Expiration')}
                     value={licForm.expirationDate}
                     onChange={(e) => setLicForm({ ...licForm, expirationDate: e.target.value })}
                   />
                   <Input
-                    placeholder="Asset ID (optional)"
+                    placeholder={t('Asset ID (optional)')}
                     value={licForm.assetId}
                     onChange={(e) => setLicForm({ ...licForm, assetId: e.target.value })}
                   />
                   <Button onClick={() => createLic.mutate(licForm)} disabled={createLic.isPending}>
-                    Create
+                    {t('Create')}
                   </Button>
                 </div>
               </DialogContent>
@@ -345,8 +399,8 @@ export default function AdminAssetsPage() {
           </div>
 
           <div className="grid gap-2">
-            {assets?.flatMap((a: any) =>
-              a.licenses?.map((l: any) => (
+            {assets?.flatMap((a: Asset) =>
+              a.licenses?.map((l: License) => (
                 <Card key={l.id} className="mb-1">
                   <CardContent className="p-3 text-sm">
                     <div className="flex items-center justify-between">
@@ -361,12 +415,12 @@ export default function AdminAssetsPage() {
                             : 'bg-red-100 text-red-800'
                         }
                       >
-                        {l.usedSeats}/{l.seats} used
+                        {l.usedSeats}/{l.seats} {t('used')}
                       </Badge>
                     </div>
                     {l.expirationDate && (
                       <p className="mt-1 text-xs text-slate-500">
-                        Expires: {l.expirationDate.slice(0, 10)}
+                        {t('Expires')}: {l.expirationDate.slice(0, 10)}
                       </p>
                     )}
                   </CardContent>
@@ -385,7 +439,7 @@ export default function AdminAssetsPage() {
       >
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Edit Asset</DialogTitle>
+            <DialogTitle>{t('Edit Asset')}</DialogTitle>
           </DialogHeader>
           {editing && (
             <div className="flex flex-col gap-3">
@@ -395,12 +449,12 @@ export default function AdminAssetsPage() {
               />
               <Input
                 defaultValue={editing.serialNumber || ''}
-                placeholder="Serial number"
+                placeholder={t('Serial number')}
                 onChange={(e) => setEditing({ ...editing, serialNumber: e.target.value })}
               />
               <Input
                 defaultValue={editing.notes || ''}
-                placeholder="Notes"
+                placeholder={t('Notes')}
                 onChange={(e) => setEditing({ ...editing, notes: e.target.value })}
               />
               <Button
@@ -414,7 +468,7 @@ export default function AdminAssetsPage() {
                 }
                 disabled={update.isPending}
               >
-                Save
+                {t('Save')}
               </Button>
             </div>
           )}

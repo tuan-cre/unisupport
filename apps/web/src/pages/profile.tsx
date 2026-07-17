@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAuth, type User } from '../hooks/use-auth';
 import { useToast } from '../hooks/use-toast';
 import AppLayout from '../components/app-layout';
@@ -11,6 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../components/
 import api from '../lib/api';
 
 export default function ProfilePage() {
+  const { t } = useTranslation(['common', 'auth', 'page']);
   const { user, refreshUser } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -28,9 +30,9 @@ export default function ProfilePage() {
     try {
       await api.patch('/auth/me', { firstName, lastName });
       await refreshUser();
-      toast({ title: 'Profile updated' });
+      toast({ title: t('common.success') });
     } catch {
-      toast({ title: 'Failed to update profile', variant: 'destructive' });
+      toast({ title: t('common.error'), variant: 'destructive' });
     } finally {
       setSaving(false);
     }
@@ -39,31 +41,31 @@ export default function ProfilePage() {
   return (
     <AppLayout>
       <div className="mx-auto max-w-lg">
-        <h2 className="mb-6 text-xl font-semibold text-slate-900">Profile</h2>
+        <h2 className="mb-6 text-xl font-semibold text-slate-900">{t('page.profile')}</h2>
 
         <Card>
           <CardHeader>
-            <CardTitle>Personal Information</CardTitle>
+            <CardTitle>{t('auth.personalInfo')}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-1">
-              <label className="text-sm font-medium">Email</label>
+              <label className="text-sm font-medium">{t('auth.email')}</label>
               <Input value={user?.email ?? ''} disabled />
             </div>
             <div className="space-y-1">
-              <label className="text-sm font-medium">First name</label>
+              <label className="text-sm font-medium">{t('common.firstLabel')}</label>
               <Input value={firstName} onChange={(e) => setFirstName(e.target.value)} />
             </div>
             <div className="space-y-1">
-              <label className="text-sm font-medium">Last name</label>
+              <label className="text-sm font-medium">{t('common.lastLabel')}</label>
               <Input value={lastName} onChange={(e) => setLastName(e.target.value)} />
             </div>
             <div className="flex gap-2 pt-2">
               <Button onClick={handleSave} disabled={saving}>
-                {saving ? 'Saving...' : 'Save changes'}
+                {saving ? t('common.saving') : t('common.saveChanges')}
               </Button>
               <Button variant="outline" onClick={() => navigate('/tickets')}>
-                Cancel
+                {t('common.cancel')}
               </Button>
             </div>
           </CardContent>
@@ -71,38 +73,40 @@ export default function ProfilePage() {
 
         <Card className="mt-6">
           <CardHeader>
-            <CardTitle>Account</CardTitle>
+            <CardTitle>{t('page.profile')}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             <p className="text-sm text-muted-foreground">
-              Status: <span className="font-medium text-slate-900">{user?.status}</span>
+              {t('common.statusLabel')}:{' '}
+              <span className="font-medium text-slate-900">{user?.status}</span>
             </p>
             <p className="text-sm text-muted-foreground">
-              Role: <span className="font-medium text-slate-900">{user?.role?.name ?? 'None'}</span>
+              {t('common.roleLabel')}:{' '}
+              <span className="font-medium text-slate-900">{user?.role?.name ?? 'None'}</span>
             </p>
             <p className="text-sm text-muted-foreground">
-              Email verified:{' '}
+              {t('auth.emailVerified')}:{' '}
               {user?.emailVerifiedAt ? (
                 <Badge variant="default" className="bg-green-100 text-green-700">
-                  Verified
+                  {t('common.verified')}
                 </Badge>
               ) : (
-                <Badge variant="secondary">Pending</Badge>
+                <Badge variant="secondary">{t('common.pending')}</Badge>
               )}
             </p>
             <p className="text-sm text-muted-foreground">
-              Two-factor auth:{' '}
+              {t('common.twoFactorAuth')}:{' '}
               {user?.totpEnabled ? (
                 <Badge variant="default" className="bg-green-100 text-green-700">
-                  Enabled
+                  {t('common.enabled')}
                 </Badge>
               ) : (
-                <Badge variant="secondary">Disabled</Badge>
+                <Badge variant="secondary">{t('common.disabled')}</Badge>
               )}
             </p>
             <div className="flex gap-2 pt-1">
               <Button variant="outline" onClick={() => navigate('/change-password')}>
-                Change password
+                {t('page.changePassword')}
               </Button>
               {user?.totpEnabled ? (
                 <Button
@@ -110,10 +114,10 @@ export default function ProfilePage() {
                   onClick={async () => {
                     await api.post('/auth/mfa/disable');
                     refreshUser();
-                    toast({ title: 'MFA disabled' });
+                    toast({ title: t('auth.mfaDisabled') });
                   }}
                 >
-                  Disable 2FA
+                  {t('auth.disable2fa')}
                 </Button>
               ) : (
                 <Button
@@ -126,7 +130,7 @@ export default function ProfilePage() {
                     setMfaDialog(true);
                   }}
                 >
-                  Enable 2FA
+                  {t('auth.enable2fa')}
                 </Button>
               )}
             </div>
@@ -142,17 +146,18 @@ export default function ProfilePage() {
       >
         <DialogContent className="max-w-sm">
           <DialogHeader>
-            <DialogTitle>Set up Two-Factor Auth</DialogTitle>
+            <DialogTitle>{t('auth.setUpTwoFactor')}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 pt-2 text-center">
             {mfaQr && <img src={mfaQr} alt="QR Code" className="mx-auto h-48 w-48" />}
             <p className="text-xs text-slate-500">
-              Or enter manually: <code className="rounded bg-slate-100 px-1">{mfaSecret}</code>
+              {t('auth.orEnterManually')}{' '}
+              <code className="rounded bg-slate-100 px-1">{mfaSecret}</code>
             </p>
             <Input
               value={mfaCode}
               onChange={(e) => setMfaCode(e.target.value)}
-              placeholder="Enter 6-digit code"
+              placeholder={t('auth.enterCode')}
               className="text-center tracking-widest"
               maxLength={6}
             />
@@ -164,11 +169,11 @@ export default function ProfilePage() {
                 try {
                   await api.post('/auth/mfa/verify-setup', { code: mfaCode });
                   await refreshUser();
-                  toast({ title: 'MFA enabled successfully' });
+                  toast({ title: t('auth.mfaEnabledSuccess') });
                   setMfaDialog(false);
                 } catch (err: any) {
                   toast({
-                    title: err.response?.data?.message || 'Invalid code',
+                    title: err.response?.data?.message || t('auth.invalidCode'),
                     variant: 'destructive',
                   });
                 } finally {
@@ -176,7 +181,7 @@ export default function ProfilePage() {
                 }
               }}
             >
-              {verifying ? 'Verifying...' : 'Verify & Enable'}
+              {verifying ? t('common.verifying') : t('auth.verifyEnable')}
             </Button>
           </div>
         </DialogContent>
@@ -184,7 +189,7 @@ export default function ProfilePage() {
 
       <Card className="mb-6">
         <CardHeader>
-          <CardTitle>Privacy & Data</CardTitle>
+          <CardTitle>{t('auth.privacyData')}</CardTitle>
         </CardHeader>
         <CardContent className="flex gap-3">
           <Button
@@ -203,19 +208,18 @@ export default function ProfilePage() {
               URL.revokeObjectURL(url);
             }}
           >
-            Export my data
+            {t('auth.exportMyData')}
           </Button>
           <Button
             variant="destructive"
             size="sm"
             onClick={async () => {
-              if (!window.confirm('This will permanently anonymize your account. Are you sure?'))
-                return;
+              if (!window.confirm(t('auth.anonymizeConfirm'))) return;
               await api.delete('/auth/me/anonymize');
               window.location.href = '/login';
             }}
           >
-            Anonymize account
+            {t('auth.anonymizeAccount')}
           </Button>
         </CardContent>
       </Card>

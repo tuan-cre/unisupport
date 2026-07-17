@@ -1,11 +1,13 @@
 import { useState } from 'react';
 import { useSearchParams, useNavigate, Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import api from '../lib/api';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/card';
 
 export default function ResetPasswordPage() {
+  const { t } = useTranslation(['common', 'auth', 'page']);
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const token = searchParams.get('token') || '';
@@ -19,11 +21,11 @@ export default function ResetPasswordPage() {
     e.preventDefault();
     setError('');
     if (password !== confirm) {
-      setError('Passwords do not match');
+      setError(t('auth.passwordsDoNotMatch'));
       return;
     }
     if (password.length < 8) {
-      setError('At least 8 characters');
+      setError(t('auth.atLeast8Chars'));
       return;
     }
     setLoading(true);
@@ -31,7 +33,7 @@ export default function ResetPasswordPage() {
       await api.post('/auth/reset-password', { token, password });
       setDone(true);
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Reset failed');
+      setError(err.response?.data?.message || t('common.resetFailed'));
     } finally {
       setLoading(false);
     }
@@ -43,12 +45,12 @@ export default function ResetPasswordPage() {
         <Card className="w-full max-w-sm text-center">
           <CardHeader>
             <p className="text-6xl font-bold text-slate-300">400</p>
-            <CardTitle className="text-xl">Invalid reset link</CardTitle>
+            <CardTitle className="text-xl">{t('auth.invalidResetLink')}</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="mb-6 text-sm text-slate-500">This link is missing the reset token.</p>
+            <p className="mb-6 text-sm text-slate-500">{t('auth.resetLinkMissing')}</p>
             <Link to="/forgot-password">
-              <Button>Request new link</Button>
+              <Button>{t('auth.requestNewLink')}</Button>
             </Link>
           </CardContent>
         </Card>
@@ -64,24 +66,23 @@ export default function ResetPasswordPage() {
             UniSupport
           </p>
           <CardTitle className="text-2xl">
-            {done ? 'Password reset' : 'Choose new password'}
+            {done ? t('auth.passwordReset') : t('auth.chooseNewPassword')}
           </CardTitle>
         </CardHeader>
         <CardContent>
           {done ? (
             <div className="space-y-4">
-              <p className="text-sm text-slate-600">Your password has been reset successfully.</p>
+              <p className="text-sm text-slate-600">{t('auth.passwordHasBeenReset')}</p>
               <Button onClick={() => navigate('/login')} className="w-full">
-                Sign in
+                {t('auth.signIn')}
               </Button>
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-4">
               {error && <p className="rounded-lg bg-red-50 p-3 text-sm text-red-600">{error}</p>}
-
               <div>
                 <label className="mb-1 block text-sm font-medium text-slate-700">
-                  New password
+                  {t('auth.newPassword')}
                 </label>
                 <Input
                   type="password"
@@ -91,10 +92,9 @@ export default function ResetPasswordPage() {
                   minLength={8}
                 />
               </div>
-
               <div>
                 <label className="mb-1 block text-sm font-medium text-slate-700">
-                  Confirm password
+                  {t('auth.confirmPassword')}
                 </label>
                 <Input
                   type="password"
@@ -103,9 +103,8 @@ export default function ResetPasswordPage() {
                   required
                 />
               </div>
-
               <Button type="submit" className="w-full" disabled={loading}>
-                {loading ? 'Resetting...' : 'Reset password'}
+                {loading ? t('common.resetting') : t('auth.resetPassword')}
               </Button>
             </form>
           )}

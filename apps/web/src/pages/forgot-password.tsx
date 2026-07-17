@@ -1,11 +1,13 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import api from '../lib/api';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/card';
 
 export default function ForgotPasswordPage() {
+  const { t } = useTranslation(['common', 'auth', 'page']);
   const [email, setEmail] = useState('');
   const [sent, setSent] = useState(false);
   const [resetLink, setResetLink] = useState('');
@@ -21,7 +23,7 @@ export default function ForgotPasswordPage() {
       setSent(true);
       setResetLink(res.data.resetLink || '');
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Something went wrong');
+      setError(err.response?.data?.message || t('common.error'));
     } finally {
       setLoading(false);
     }
@@ -34,32 +36,31 @@ export default function ForgotPasswordPage() {
           <p className="mb-1 text-xs font-bold uppercase tracking-[0.18em] text-blue-600">
             UniSupport
           </p>
-          <CardTitle className="text-2xl">Reset password</CardTitle>
+          <CardTitle className="text-2xl">{t('auth.forgotPassword')}</CardTitle>
         </CardHeader>
         <CardContent>
           {sent ? (
             <div className="space-y-4">
-              <p className="text-sm text-slate-600">
-                If that email exists, a reset link has been sent.
-              </p>
+              <p className="text-sm text-slate-600">{t('auth.resetLinkSent')}</p>
               {resetLink && (
                 <p className="rounded-lg bg-blue-50 p-3 text-xs text-blue-700 break-all">
-                  Dev mode — reset link:{' '}
+                  {t('auth.resetDevLink')}{' '}
                   <a href={resetLink} className="underline">
                     {resetLink}
                   </a>
                 </p>
               )}
               <Link to="/login" className="block text-center text-sm text-blue-600 hover:underline">
-                Back to sign in
+                {t('common.backToSignIn')}
               </Link>
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-4">
               {error && <p className="rounded-lg bg-red-50 p-3 text-sm text-red-600">{error}</p>}
-
               <div>
-                <label className="mb-1 block text-sm font-medium text-slate-700">Email</label>
+                <label className="mb-1 block text-sm font-medium text-slate-700">
+                  {t('auth.email')}
+                </label>
                 <Input
                   type="email"
                   value={email}
@@ -67,14 +68,12 @@ export default function ForgotPasswordPage() {
                   required
                 />
               </div>
-
               <Button type="submit" className="w-full" disabled={loading}>
-                {loading ? 'Sending...' : 'Send reset link'}
+                {loading ? t('common.sending') : t('common.sendResetLink')}
               </Button>
-
               <p className="text-center text-sm text-slate-500">
                 <Link to="/login" className="text-blue-600 hover:underline">
-                  Back to sign in
+                  {t('common.backToSignIn')}
                 </Link>
               </p>
             </form>

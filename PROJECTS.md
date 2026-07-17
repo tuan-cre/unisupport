@@ -21,11 +21,11 @@ unisupport/
 │   │   └── migrations/
 │   └── src/
 │       ├── main.ts
-│       ├── app.module.ts       # 27 modules registered
+│   ├── app.module.ts # 28 modules registered (incl. JobsModule)
 │       ├── swagger.ts
 │       ├── app.controller.ts   # GET /health
 │       ├── assets/             # Phase 12: Asset, License, Checkout mgmt
-│       ├── auth/               # JWT, register, login, MFA, password reset
+│   ├── auth/ # JWT, register, login, MFA, password reset, SSO/SAML
 │       ├── changes/            # Phase 10: Change requests + approvals
 │       ├── chat/               # Phase 17: Live chat + inbound email
 │       ├── config/
@@ -41,7 +41,7 @@ unisupport/
 │       ├── notifications/      # Phase 2: In-app notifications
 │       ├── prisma/             # Global PrismaService
 │       ├── problems/           # Phase 10: Problem records + ticket linking
-│       ├── reports/            # Phase 13: Reports & analytics
+│   ├── reports/ # Phase 13/18: Reports, analytics, CSAT, PDF export
 │       ├── roles/              # RBAC role/permission management
 │       ├── sentry/             # Phase 14: Sentry error tracking
 │       ├── slas/               # Phase 9: SLA policies + calendars
@@ -185,6 +185,8 @@ Web → `http://localhost:5173` | API → `http://localhost:3001/api/health`
 | `MINIO_SECRET_KEY`   | —                       | **Yes**  |
 | `JWT_SECRET`         | —                       | **Yes**  |
 | `JWT_REFRESH_SECRET` | —                       | **Yes**  |
+| `WEBHOOK_SECRET`     | —                       | **Yes**  |
+| `SENTRY_DSN`         | —                       | No       |
 
 Validated on startup via Joi in `apps/api/src/config/config.module.ts`.
 
@@ -224,10 +226,12 @@ Validated on startup via Joi in `apps/api/src/config/config.module.ts`.
 | PATCH  | `/:id`           | Yes  | Update ticket                    |
 | POST   | `/:id/comments`  | Yes  | Add comment                      |
 | POST   | `/:id/watchers`  | Yes  | Watch/resolve ticket             |
+| POST   | `/:id/rate`      | Yes  | CSAT rating 1-5 with feedback    |
 | GET    | `/templates`     | Yes  | List ticket templates            |
 | POST   | `/templates`     | Yes  | Create template                  |
 | PATCH  | `/templates/:id` | Yes  | Update template                  |
 | DELETE | `/templates/:id` | Yes  | Delete template                  |
+| GET    | `/csv`           | Yes  | CSV export                       |
 
 ### Admin / Users/Roles/Departments
 
@@ -340,13 +344,14 @@ Validated on startup via Joi in `apps/api/src/config/config.module.ts`.
 
 ### Reports (Phase 13, `/reports`)
 
-| Method | Path                 | Auth | Action                    |
-| ------ | -------------------- | ---- | ------------------------- |
-| GET    | `/ticket-volume`     | Yes  | Tickets over time (chart) |
-| GET    | `/sla-compliance`    | Yes  | SLA hit/miss rates        |
-| GET    | `/agent-performance` | Yes  | Agent resolution metrics  |
-| GET    | `/csat`              | Yes  | CSAT scores               |
-| GET    | `/export`            | Yes  | CSV export                |
+| Method | Path                 | Auth | Action                                  |
+| ------ | -------------------- | ---- | --------------------------------------- |
+| GET    | `/ticket-volume`     | Yes  | Tickets over time (chart)               |
+| GET    | `/sla-compliance`    | Yes  | SLA hit/miss rates                      |
+| GET    | `/agent-performance` | Yes  | Agent resolution metrics                |
+| GET    | `/csat`              | Yes  | CSAT scores (avg, distribution, recent) |
+| GET    | `/export/csv`        | Yes  | CSV export                              |
+| GET    | `/export/pdf`        | Yes  | PDF export                              |
 
 ### Chat (Phase 17, `/chat`)
 
@@ -394,7 +399,7 @@ Validated on startup via Joi in `apps/api/src/config/config.module.ts`.
 
 | Model                | Key Fields                                                                                                           |
 | -------------------- | -------------------------------------------------------------------------------------------------------------------- |
-| `User`               | email, passwordHash, roleId?, departmentId?, status, totpSecret?, emailVerifiedAt?                                   |
+| `User`               | email, passwordHash, roleId?, departmentId?, status, totpSecret?, emailVerifiedAt?, samlId?                          |
 | `Role`               | name (unique), permissions (M2M)                                                                                     |
 | `Permission`         | name (unique), roles (M2M)                                                                                           |
 | `Department`         | name (unique), soft-delete                                                                                           |
@@ -426,6 +431,7 @@ Validated on startup via Joi in `apps/api/src/config/config.module.ts`.
 | `HardwareCheckout`   | assetId, userId, checkedOutAt, checkedInAt?, dueDate                                                                 |
 | `ChatConversation`   | subject?, visitorName?, visitorEmail?, status (ACTIVE/CLOSED), ticketId?                                             |
 | `ChatMessage`        | conversationId, content, senderType (VISITOR/AGENT), senderId?, senderName?                                          |
+| `TicketRating`       | ticketId, userId, rating (1-5), feedback?, createdAt                                                                 |
 
 All PKs use `cuid()`. Soft delete via `deletedAt DateTime?` on User/Ticket/Department/Comment.
 
@@ -469,6 +475,7 @@ All PKs use `cuid()`. Soft delete via `deletedAt DateTime?` on User/Ticket/Depar
 | `/admin/changes`      | `AdminChangesPage`     | auth + guard  |
 | `/admin/assets`       | `AdminAssetsPage`      | auth + guard  |
 | `/admin/chat`         | `AdminChatPage`        | auth + guard  |
+| `/saml-callback`      | `SamlCallbackPage`     | No            |
 | `/forbidden`          | `ForbiddenPage`        | No            |
 | `*`                   | `NotFoundPage`         | No            |
 
@@ -501,6 +508,7 @@ Axios instance with:
 | `empty-state.tsx`     | Centered icon + title + message + optional action                                |
 | `confirm-dialog.tsx`  | Confirmation modal for destructive actions                                       |
 | `chat-widget.tsx`     | Floating live chat widget (REST polling, visitor-facing)                         |
+| `csat-survey.tsx`     | Star-rating widget for ticket satisfaction                                       |
 | `protected-route.tsx` | Route guard: redirects to `/login` if unauthenticated                            |
 | `use-theme.ts`        | Dark mode: localStorage + system preference, toggles `.dark` class               |
 

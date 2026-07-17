@@ -1,105 +1,92 @@
-import { mockPrisma, mockNotifications, createTestJwt, setup } from './setup';
+import { PrismaService } from '../prisma/prisma.service';
+import { setup, createTestJwt } from './setup.integration';
 import type { INestApplication } from '@nestjs/common';
 
 describe('TicketsController (integration)', () => {
   let nestApp: INestApplication;
   let api: any;
+  let prisma: PrismaService;
   const token = createTestJwt();
   const adminToken = createTestJwt({ roleName: 'admin' });
 
-  const mockTicket = {
-    id: 'ticket-1',
-    subject: 'Laptop not turning on',
-    description: 'My laptop is broken and needs fixing shortly.',
-    priority: 'MEDIUM',
-    status: 'OPEN',
-    type: null,
-    departmentId: null,
-    assigneeId: null,
-    requesterId: 'user-1',
-    slaId: null,
-    createdAt: new Date('2024-01-15T10:00:00Z'),
-    resolvedAt: null,
-    closedAt: null,
-    requester: { id: 'user-1', firstName: 'John', lastName: 'Doe', email: 'john@example.com' },
-    assignee: null,
-    department: null,
-    sla: null,
-    tags: [],
-    attachments: [],
+  // Clean DB and reseed minimal data required by tests
+  const prepareDb = async () => {
+    // Delete test data in order to avoid FK violations
+    await prisma.$transaction([
+      prisma.comment.deleteMany(),
+      prisma.attachment.deleteMany(),
+      prisma.ticketRating.deleteMany(),
+      prisma.ticketWatcher.deleteMany(),
+      prisma.ticketRelation.deleteMany(),
+      prisma.timeEntry.deleteMany(),
+      prisma.ticketHistory.deleteMany(),
+      prisma.ticketTemplate.deleteMany(),
+      prisma.ticketTag.deleteMany(),
+      prisma.ticket.deleteMany(),
+      // Keep seed users (user-1, admin-1) and articleCategory intact
+    ]);
+
+    // Create a standard ticket 'ticket-1' for tests that depend on it
+    await prisma.ticket.create({
+      data: {
+        id: 'ticket-1',
+        subject: 'Laptop not turning on',
+        description: 'My laptop is broken and needs fixing shortly.',
+        priority: 'MEDIUM',
+        status: 'OPEN',
+        requesterId: 'user-1',
+      },
+    });
   };
 
   beforeAll(async () => {
     const result = await setup();
     nestApp = result.app;
     api = result.api;
+    prisma = result.prisma;
   });
 
   afterAll(async () => {
     await nestApp.close();
   });
 
-  beforeEach(() => {
-    jest.clearAllMocks();
-    mockPrisma.ticket.findMany.mockResolvedValue([]);
-    mockPrisma.ticket.count.mockResolvedValue(0);
-    mockPrisma.ticket.create.mockResolvedValue({ ...mockTicket });
-    mockPrisma.sla.findFirst.mockResolvedValue(null);
-    mockPrisma.comment.create.mockResolvedValue({
-      id: 'comment-1',
-      content: 'Helping with this',
-      isInternal: false,
-      author: { id: 'user-1', firstName: 'John', lastName: 'Doe', email: 'john@example.com' },
-    });
-    mockPrisma.ticket.update.mockResolvedValue({ ...mockTicket, status: 'IN_PROGRESS' });
-    mockPrisma.ticketRating.aggregate.mockResolvedValue({
-      _avg: { rating: 4.2 },
-      _count: { id: 150 },
-    });
-    mockPrisma.ticketRating.groupBy.mockResolvedValue([
-      { rating: 5, _count: { id: 80 } },
-      { rating: 4, _count: { id: 50 } },
-      { rating: 3, _count: { id: 20 } },
-    ]);
+  beforeEach(async () => {
+    await prepareDb();
   });
 
   it('1. GET /api/tickets returns 200', async () => {
-    const res = await api.get('/api/tickets');
-    expect(res.status).toBe(200);
-    expect(res.body.success).toBe(true);
+    await api.get('/api/tickets').expect(200);
   });
 
   it('2. POST /api/tickets creates ticket with valid data (requires auth)', async () => {
-    await api
-      .post('/api/tickets')
-      .set('Authorization', `Bearer ${token}`)
-      .send({ subject: 'Laptop issue', description: 'My laptop needs fixing now.' })
-      .expect((r: any) => expect([200, 201]).toContain(r.status));
-
-    expect(mockPrisma.ticket.create).toHaveBeenCalledWith(
-      expect.objectContaining({ data: expect.objectContaining({ subject: 'Laptop issue' }) }),
-    );
-  });
-
-  it('3. POST /api/tickets returns error with missing fields', async () => {
     const res = await api
       .post('/api/tickets')
       .set('Authorization', `Bearer ${token}`)
-      .send({ subject: 'Nice' });
+      .send({ subject: 'Laptop issue', description: 'My laptop needs fixing now.' })
+      .expect((r) => expect([200, 201]).toContain(r.status));
 
-    expect([200, 400]).toContain(res.status);
+    // Verify ticket created in DB
+    const dbTicket = await prisma.ticket.findFirst({
+      where: { subject: 'Laptop issue' },
+    });
+    expect(dbTicket).not.toBeNull();
+    expect(dbTicket?.description).toBe('My laptop needs fixing now.');
+  });
+
+  it('3. POST /api/tickets returns error with missing fields', async () => {
+    await api
+      .post('/api/tickets')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ subject: 'Nice' })
+      .expect((r) => expect([200, 400]).toContain(r.status));
   });
 
   it('4. GET /api/tickets/:id returns 404 for non-existent', async () => {
-    mockPrisma.ticket.findUnique.mockResolvedValue(null);
     await api.get('/api/tickets/nonexistent-id').expect(404);
   });
 
   it('5a. POST /api/tickets/:id/comments returns 401 without token', async () => {
-    await api
-      .post('/api/tickets/ticket-1/comments')
-      .send({ content: 'Some comment' })
-      .expect(401);
+    await api.post('/api/tickets/ticket-1/comments').send({ content: 'Some comment' }).expect(401);
   });
 
   it('5b. POST /api/tickets/:id/comments returns 200 with token', async () => {
@@ -107,9 +94,13 @@ describe('TicketsController (integration)', () => {
       .post('/api/tickets/ticket-1/comments')
       .set('Authorization', `Bearer ${token}`)
       .send({ content: 'Some comment' })
-      .expect((r: any) => expect([200, 201]).toContain(r.status));
+      .expect((r) => expect([200, 201]).toContain(r.status));
 
-    expect(mockPrisma.comment.create).toHaveBeenCalled();
+    // Verify comment created in DB
+    const comment = await prisma.comment.findFirst({
+      where: { ticketId: 'ticket-1', content: 'Some comment' },
+    });
+    expect(comment).not.toBeNull();
   });
 
   it('6. PATCH /api/tickets/:id updates status (requires auth)', async () => {
@@ -117,19 +108,16 @@ describe('TicketsController (integration)', () => {
       .patch('/api/tickets/ticket-1')
       .set('Authorization', `Bearer ${adminToken}`)
       .send({ status: 'IN_PROGRESS' })
-      .expect((r: any) => expect([200, 201]).toContain(r.status));
+      .expect((r) => expect([200, 201]).toContain(r.status));
 
-    expect(mockPrisma.ticket.update).toHaveBeenCalledWith(
-      expect.objectContaining({ where: { id: 'ticket-1' }, data: expect.objectContaining({ status: 'IN_PROGRESS' }) }),
-    );
+    const ticket = await prisma.ticket.findUnique({ where: { id: 'ticket-1' } });
+    expect(ticket?.status).toBe('IN_PROGRESS');
   });
 
   it('7. GET /api/tickets/csv returns CSV with correct content-type', async () => {
-    const res = await api
-      .get('/api/tickets/csv')
-      .set('Authorization', `Bearer ${adminToken}`);
+    const res = await api.get('/api/tickets/csv').set('Authorization', `Bearer ${adminToken}`);
 
-    expect((res.headers['content-type'] || '')).toMatch(/text\/csv/);
+    expect(res.headers['content-type'] as string).toMatch(/text\/csv/);
   });
 
   it('8. GET /api/reports/csat returns 200 with avgRating, distribution, totalResponses', async () => {
@@ -145,25 +133,16 @@ describe('TicketsController (integration)', () => {
   });
 
   it('9. GET /api/reports/export/pdf returns 200 with PDF content-type for valid type', async () => {
-    const $queryRaw = mockPrisma.$queryRaw as jest.Mock;
-    $queryRaw
-      .mockResolvedValueOnce([{ date: '2024-01-15', count: 5 }])
-      .mockResolvedValueOnce([])
-      .mockResolvedValueOnce([]);
-
     const res = await api
       .get('/api/reports/export/pdf')
       .query({ type: 'ticket-volume' })
       .set('Authorization', `Bearer ${adminToken}`);
 
-    expect((res.headers['content-type'] || '')).toMatch(/application\/pdf/);
+    expect((res.headers['content-type'] as string) ?? '').toMatch(/application\/pdf/);
     expect(res.status).toBe(200);
   });
 
   it('10. 102 requests to same endpoint, some throttled (429)', async () => {
-    mockPrisma.ticket.findMany.mockResolvedValue([]);
-    mockPrisma.ticket.count.mockResolvedValue(0);
-
     const urls: string[] = [];
     for (let i = 0; i < 101; i++) urls.push('/api/tickets');
 

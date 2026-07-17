@@ -5,6 +5,9 @@ import AppLayout from '../components/app-layout';
 import { Button } from '../components/ui/button';
 import { Card, CardContent } from '../components/ui/card';
 import { Skeleton } from '../components/ui/skeleton';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import rehypeSanitize from 'rehype-sanitize';
 import { ArrowLeft, ThumbsUp, ThumbsDown } from 'lucide-react';
 
 export default function KbArticlePage() {
@@ -51,14 +54,16 @@ export default function KbArticlePage() {
         Back to Knowledge Base
       </button>
 
-      <article className="prose prose-slate max-w-none">
+      <article>
         <h1 className="text-2xl font-bold text-slate-900">{article.title}</h1>
         <p className="text-xs text-slate-500">
           {article.category?.name && <>{article.category.name} &middot; </>}
           {article.viewCount} views
         </p>
-        <div className="mt-6 whitespace-pre-wrap text-sm text-slate-700 leading-relaxed">
-          {article.content}
+        <div className="prose prose-slate mt-6 max-w-none text-sm leading-relaxed">
+          <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeSanitize]}>
+            {article.content}
+          </ReactMarkdown>
         </div>
       </article>
 

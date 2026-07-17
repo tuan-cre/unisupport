@@ -19,6 +19,9 @@ npm ci
 echo "=== Building shared package ==="
 npm run build --workspace=packages/shared
 
+echo "=== Generating Prisma client ==="
+npx prisma generate --schema=apps/api/prisma/schema.prisma
+
 echo "=== Building API ==="
 npm run build --workspace=apps/api
 

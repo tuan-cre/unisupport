@@ -1,3 +1,4 @@
+import { useTranslation, Trans } from 'react-i18next';
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../../lib/api';
@@ -29,6 +30,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '../../components/ui/dialog';
+import { Plus } from 'lucide-react';
 
 interface User {
   id: string;
@@ -62,6 +64,7 @@ function UserEditDialog({
 }) {
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const { t } = useTranslation(['common', 'page']);
   const [roleId, setRoleId] = useState(user.role?.id ?? '');
   const [departmentId, setDepartmentId] = useState(user.department?.id ?? '');
   const [status, setStatus] = useState(user.status);
@@ -92,11 +95,11 @@ function UserEditDialog({
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['users'] });
-      toast({ title: 'User updated' });
+      toast({ title: t('User updated') });
       onOpenChange(false);
     },
     onError: () => {
-      toast({ title: 'Failed to update user', variant: 'destructive' });
+      toast({ title: t('Failed to update user'), variant: 'destructive' });
     },
   });
 
@@ -111,13 +114,13 @@ function UserEditDialog({
         <div className="space-y-4 pt-2">
           <p className="text-sm text-muted-foreground">{user.email}</p>
           <div className="space-y-1">
-            <label className="text-sm font-medium">Role</label>
+            <label className="text-sm font-medium">{t('Role')}</label>
             <Select value={roleId} onValueChange={setRoleId}>
               <SelectTrigger>
-                <SelectValue placeholder="No role" />
+                <SelectValue placeholder={t('No role')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">No role</SelectItem>
+                <SelectItem value="">{t('No role')}</SelectItem>
                 {rolesData?.map((r) => (
                   <SelectItem key={r.id} value={r.id}>
                     {r.name}
@@ -127,13 +130,13 @@ function UserEditDialog({
             </Select>
           </div>
           <div className="space-y-1">
-            <label className="text-sm font-medium">Department</label>
+            <label className="text-sm font-medium">{t('Department')}</label>
             <Select value={departmentId} onValueChange={setDepartmentId}>
               <SelectTrigger>
-                <SelectValue placeholder="No department" />
+                <SelectValue placeholder={t('No department')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">No department</SelectItem>
+                <SelectItem value="">{t('No department')}</SelectItem>
                 {deptsData?.map((d) => (
                   <SelectItem key={d.id} value={d.id}>
                     {d.name}
@@ -143,23 +146,23 @@ function UserEditDialog({
             </Select>
           </div>
           <div className="space-y-1">
-            <label className="text-sm font-medium">Status</label>
+            <label className="text-sm font-medium">{t('Status')}</label>
             <Select value={status} onValueChange={setStatus}>
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="ACTIVE">Active</SelectItem>
-                <SelectItem value="INACTIVE">Inactive</SelectItem>
+                <SelectItem value="ACTIVE">{t('Active')}</SelectItem>
+                <SelectItem value="INACTIVE">{t('Inactive')}</SelectItem>
               </SelectContent>
             </Select>
           </div>
           <div className="flex justify-end gap-2 pt-2">
             <Button variant="outline" onClick={() => onOpenChange(false)}>
-              Cancel
+              {t('Cancel')}
             </Button>
             <Button onClick={() => mutation.mutate()} disabled={mutation.isPending}>
-              {mutation.isPending ? 'Saving...' : 'Save'}
+              {mutation.isPending ? t('Saving...') : t('Save')}
             </Button>
           </div>
         </div>
@@ -169,9 +172,21 @@ function UserEditDialog({
 }
 
 export default function AdminUsersPage() {
+  const { t, ready } = useTranslation(['common', 'page']);
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
   const [editingUser, setEditingUser] = useState<User | null>(null);
+  const [showCreate, setShowCreate] = useState(false);
+  const [createForm, setCreateForm] = useState({
+    email: '',
+    firstName: '',
+    lastName: '',
+    password: '',
+    roleId: '',
+  });
+
+  const qc = useQueryClient();
+  const { toast } = useToast();
 
   const { data, isLoading } = useQuery({
     queryKey: ['users', page, search],
@@ -185,10 +200,98 @@ export default function AdminUsersPage() {
     },
   });
 
+  const { data: rolesData } = useQuery({
+    queryKey: ['roles'],
+    queryFn: async () => {
+      const res = await api.get('/roles');
+      return res.data.data as Role[];
+    },
+  });
+
+  const createUser = useMutation({
+    mutationFn: (body: {
+      email: string;
+      firstName: string;
+      lastName: string;
+      password: string;
+      roleId?: string;
+    }) => api.post('/users', body),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['users'] });
+      setShowCreate(false);
+      setCreateForm({ email: '', firstName: '', lastName: '', password: '', roleId: '' });
+      toast({ title: t('User created') });
+    },
+    onError: () => {
+      toast({ title: t('Failed to create user'), variant: 'destructive' });
+    },
+  });
+
   return (
     <AdminLayout>
       <div className="mb-6 flex items-center justify-between">
-        <h2 className="text-xl font-semibold text-slate-900">Users</h2>
+        <h2 className="text-xl font-semibold text-slate-900">{t('Users')}</h2>
+        <Dialog open={showCreate} onOpenChange={setShowCreate}>
+          <DialogTrigger asChild>
+            <Button size="sm">
+              <Plus className="mr-1 h-4 w-4" />
+              {t('Create User')}
+            </Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>{t('Create User')}</DialogTitle>
+            </DialogHeader>
+            <div className="flex flex-col gap-3 pt-2">
+              <Input
+                placeholder={t('Email')}
+                value={createForm.email}
+                onChange={(e) => setCreateForm({ ...createForm, email: e.target.value })}
+              />
+              <Input
+                placeholder={t('First name')}
+                value={createForm.firstName}
+                onChange={(e) => setCreateForm({ ...createForm, firstName: e.target.value })}
+              />
+              <Input
+                placeholder={t('Last name')}
+                value={createForm.lastName}
+                onChange={(e) => setCreateForm({ ...createForm, lastName: e.target.value })}
+              />
+              <Input
+                type="password"
+                placeholder={t('Password')}
+                value={createForm.password}
+                onChange={(e) => setCreateForm({ ...createForm, password: e.target.value })}
+              />
+              <div className="space-y-1">
+                <label className="text-sm font-medium">{t('Role')}</label>
+                <Select
+                  value={createForm.roleId}
+                  onValueChange={(v) => setCreateForm({ ...createForm, roleId: v })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder={t('No role')} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">{t('No role')}</SelectItem>
+                    {rolesData?.map((r) => (
+                      <SelectItem key={r.id} value={r.id}>
+                        {r.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <Button
+                onClick={() => createUser.mutate(createForm)}
+                disabled={createUser.isPending || !createForm.email || !createForm.password}
+              >
+                {createUser.isPending ? t('Creating...') : t('Create')}
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
 
       <div className="mb-4">
@@ -198,7 +301,7 @@ export default function AdminUsersPage() {
             setSearch(e.target.value);
             setPage(1);
           }}
-          placeholder="Search users..."
+          placeholder={t('Search users...')}
           className="max-w-xs"
         />
       </div>
@@ -211,7 +314,7 @@ export default function AdminUsersPage() {
         </div>
       )}
 
-      {data && data.users.length === 0 && <p className="text-slate-500">No users found.</p>}
+      {data && data.users.length === 0 && <p className="text-slate-500">{t('No users found.')}</p>}
 
       {data && data.users.length > 0 && (
         <>
@@ -219,12 +322,12 @@ export default function AdminUsersPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Role</TableHead>
-                  <TableHead>Department</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Actions</TableHead>
+                  <TableHead>{t('Name')}</TableHead>
+                  <TableHead>{t('Email')}</TableHead>
+                  <TableHead>{t('Role')}</TableHead>
+                  <TableHead>{t('Department')}</TableHead>
+                  <TableHead>{t('Status')}</TableHead>
+                  <TableHead>{t('Actions')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -247,7 +350,7 @@ export default function AdminUsersPage() {
                     </TableCell>
                     <TableCell>
                       <Button variant="outline" size="sm" onClick={() => setEditingUser(u)}>
-                        Edit
+                        {t('Edit')}
                       </Button>
                     </TableCell>
                   </TableRow>
@@ -258,7 +361,8 @@ export default function AdminUsersPage() {
 
           <div className="mt-4 flex items-center justify-between text-sm text-slate-500">
             <span>
-              Page {data?.meta?.page} of {data?.meta?.totalPages} ({data?.meta?.total} users)
+              {t('Page')} {data?.meta?.page} {t('of')} {data?.meta?.totalPages} ({data?.meta?.total}{' '}
+              {t('users')})
             </span>
             <div className="flex gap-2">
               <Button
@@ -267,7 +371,7 @@ export default function AdminUsersPage() {
                 disabled={page <= 1}
                 onClick={() => setPage((p) => p - 1)}
               >
-                Previous
+                {t('Previous')}
               </Button>
               <Button
                 variant="outline"
@@ -275,7 +379,7 @@ export default function AdminUsersPage() {
                 disabled={page >= data?.meta?.totalPages}
                 onClick={() => setPage((p) => p + 1)}
               >
-                Next
+                {t('Next')}
               </Button>
             </div>
           </div>

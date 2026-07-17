@@ -5,7 +5,27 @@ on:
     branches: [main]
 
 jobs:
-  noop:
+  build:
     runs-on: ubuntu-latest
     steps:
-      - run: echo "Deploy handled by server-side cron polling (deploy-poll.sh)"
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+      - run: npm ci
+      - run: npm run build --workspace apps/api --workspace apps/web
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          key: ${{ secrets.SSH_KEY }}
+          script: |
+            cd /home/lhtuan/unisupport
+            git pull
+            npm ci
+            npx prisma generate --schema=apps/api/prisma/schema.prisma
+            npm run build --workspace apps/api --workspace apps/web
+            cp -r apps/web/dist/* /srv/unisupport/web/
+            sudo systemctl restart unisupport-api.service

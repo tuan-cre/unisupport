@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../../lib/api';
@@ -37,6 +38,7 @@ function RoleFormDialog({
 }) {
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const { t } = useTranslation(['common', 'page']);
   const [name, setName] = useState(role?.name ?? '');
   const [selectedIds, setSelectedIds] = useState<string[]>(
     role?.permissions.map((p) => p.id) ?? [],
@@ -61,12 +63,12 @@ function RoleFormDialog({
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['roles'] });
-      toast({ title: role ? 'Role updated' : 'Role created' });
+      toast({ title: role ? t('Role updated') : t('Role created') });
       onOpenChange(false);
     },
     onError: (err: any) => {
       toast({
-        title: err.response?.data?.message || 'Failed to save role',
+        title: err.response?.data?.message || t('Failed to save role'),
         variant: 'destructive',
       });
     },
@@ -80,15 +82,15 @@ function RoleFormDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{role ? 'Edit Role' : 'Create Role'}</DialogTitle>
+          <DialogTitle>{role ? t('Edit Role') : t('Create Role')}</DialogTitle>
         </DialogHeader>
         <div className="space-y-4 pt-2">
           <div className="space-y-1">
-            <label className="text-sm font-medium">Name</label>
-            <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Role name" />
+            <label className="text-sm font-medium">{t('Name')}</label>
+            <Input value={name} onChange={(e) => setName(e.target.value)} placeholder={t('Name')} />
           </div>
           <div className="space-y-1">
-            <label className="text-sm font-medium">Permissions</label>
+            <label className="text-sm font-medium">{t('Permissions')}</label>
             {permsLoading ? (
               <div className="space-y-2">
                 {Array.from({ length: 6 }).map((_, i) => (
@@ -112,17 +114,17 @@ function RoleFormDialog({
                   </label>
                 ))}
                 {allPermissions?.length === 0 && (
-                  <p className="text-sm text-slate-400">No permissions available</p>
+                  <p className="text-sm text-slate-400">{t('No permissions available')}</p>
                 )}
               </div>
             )}
           </div>
           <div className="flex justify-end gap-2 pt-2">
             <Button variant="outline" onClick={() => onOpenChange(false)}>
-              Cancel
+              {t('Cancel')}
             </Button>
             <Button onClick={() => mutation.mutate()} disabled={mutation.isPending || !name.trim()}>
-              {mutation.isPending ? 'Saving...' : 'Save'}
+              {mutation.isPending ? t('Saving...') : t('Save')}
             </Button>
           </div>
         </div>
@@ -132,6 +134,7 @@ function RoleFormDialog({
 }
 
 export default function AdminRolesPage() {
+  const { t } = useTranslation(['common', 'page']);
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [showForm, setShowForm] = useState(false);
@@ -151,24 +154,24 @@ export default function AdminRolesPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['roles'] });
-      toast({ title: 'Role deleted' });
+      toast({ title: t('Role deleted') });
     },
     onError: () => {
-      toast({ title: 'Failed to delete role', variant: 'destructive' });
+      toast({ title: t('Failed to delete role'), variant: 'destructive' });
     },
   });
 
   return (
     <AdminLayout>
       <div className="mb-6 flex items-center justify-between">
-        <h2 className="text-xl font-semibold text-slate-900">Roles</h2>
+        <h2 className="text-xl font-semibold text-slate-900">{t('Roles')}</h2>
         <Button
           onClick={() => {
             setEditingRole(undefined);
             setShowForm(true);
           }}
         >
-          Create role
+          {t('Create role')}
         </Button>
       </div>
 
@@ -180,7 +183,7 @@ export default function AdminRolesPage() {
         </div>
       )}
 
-      {roles && roles.length === 0 && <p className="text-slate-500">No roles yet.</p>}
+      {roles && roles.length === 0 && <p className="text-slate-500">{t('No roles yet.')}</p>}
 
       {roles && roles.length > 0 && (
         <div className="space-y-3">
@@ -197,18 +200,18 @@ export default function AdminRolesPage() {
                       setShowForm(true);
                     }}
                   >
-                    Edit
+                    {t('Edit')}
                   </Button>
                   <Button
                     variant="destructive"
                     size="sm"
                     onClick={() => {
-                      if (confirm(`Delete role "${role.name}"?`)) {
+                      if (confirm(t('Delete role "{{name}}"?', { name: role.name }))) {
                         deleteMutation.mutate(role.id);
                       }
                     }}
                   >
-                    Delete
+                    {t('Delete')}
                   </Button>
                 </div>
               </div>
@@ -219,7 +222,7 @@ export default function AdminRolesPage() {
                   </Badge>
                 ))}
                 {role.permissions.length === 0 && (
-                  <span className="text-sm text-slate-400">No permissions</span>
+                  <span className="text-sm text-slate-400">{t('No permissions')}</span>
                 )}
               </div>
             </div>

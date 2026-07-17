@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import api from '../lib/api';
 import { Badge } from '../components/ui/badge';
 import { Button } from '../components/ui/button';
@@ -57,20 +58,31 @@ const priorityColor: Record<string, string> = {
   URGENT: 'text-red-600 font-semibold',
 };
 
+function useDebounce<T>(value: T, delay: number): T {
+  const [debouncedValue, setDebouncedValue] = useState(value);
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedValue(value), delay);
+    return () => clearTimeout(timer);
+  }, [value, delay]);
+  return debouncedValue;
+}
+
 export default function TicketListPage() {
+  const { t } = useTranslation('common');
   const navigate = useNavigate();
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
+  const debouncedSearch = useDebounce(search, 300);
   const [statusFilter, setStatusFilter] = useState('');
   const [priorityFilter, setPriorityFilter] = useState('');
 
   const { data, isLoading } = useQuery({
-    queryKey: ['tickets', page, search, statusFilter, priorityFilter],
+    queryKey: ['tickets', page, debouncedSearch, statusFilter, priorityFilter],
     queryFn: async () => {
       const params = new URLSearchParams();
       params.set('page', String(page));
       params.set('limit', '20');
-      if (search) params.set('q', search);
+      if (debouncedSearch) params.set('q', debouncedSearch);
       if (statusFilter) params.set('status', statusFilter);
       if (priorityFilter) params.set('priority', priorityFilter);
       const res = await api.get(`/tickets?${params}`);
@@ -81,7 +93,7 @@ export default function TicketListPage() {
   return (
     <AppLayout>
       <div className="mb-6 flex items-center justify-between">
-        <h2 className="text-xl font-semibold text-slate-900">Tickets</h2>
+        <h2 className="text-xl font-semibold text-slate-900">{t('page.tickets')}</h2>
       </div>
 
       <div className="mb-4 flex flex-wrap gap-3">
@@ -91,7 +103,7 @@ export default function TicketListPage() {
             setSearch(e.target.value);
             setPage(1);
           }}
-          placeholder="Search tickets..."
+          placeholder={t('common.searchTickets')}
           className="flex-1 min-w-0"
         />
         <Select
@@ -102,15 +114,15 @@ export default function TicketListPage() {
           }}
         >
           <SelectTrigger className="w-36">
-            <SelectValue placeholder="All statuses" />
+            <SelectValue placeholder={t('common.allStatuses')} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">All statuses</SelectItem>
-            <SelectItem value="OPEN">Open</SelectItem>
-            <SelectItem value="IN_PROGRESS">In Progress</SelectItem>
-            <SelectItem value="PENDING">Pending</SelectItem>
-            <SelectItem value="RESOLVED">Resolved</SelectItem>
-            <SelectItem value="CLOSED">Closed</SelectItem>
+            <SelectItem value="">{t('common.allStatuses')}</SelectItem>
+            <SelectItem value="OPEN">{t('common.open')}</SelectItem>
+            <SelectItem value="IN_PROGRESS">{t('common.inProgress')}</SelectItem>
+            <SelectItem value="PENDING">{t('common.pending')}</SelectItem>
+            <SelectItem value="RESOLVED">{t('common.resolved')}</SelectItem>
+            <SelectItem value="CLOSED">{t('common.closed')}</SelectItem>
           </SelectContent>
         </Select>
         <Select
@@ -121,14 +133,14 @@ export default function TicketListPage() {
           }}
         >
           <SelectTrigger className="w-36">
-            <SelectValue placeholder="All priorities" />
+            <SelectValue placeholder={t('common.allPriorities')} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">All priorities</SelectItem>
-            <SelectItem value="LOW">Low</SelectItem>
-            <SelectItem value="MEDIUM">Medium</SelectItem>
-            <SelectItem value="HIGH">High</SelectItem>
-            <SelectItem value="URGENT">Urgent</SelectItem>
+            <SelectItem value="">{t('common.allPriorities')}</SelectItem>
+            <SelectItem value="LOW">{t('common.low')}</SelectItem>
+            <SelectItem value="MEDIUM">{t('common.medium')}</SelectItem>
+            <SelectItem value="HIGH">{t('common.high')}</SelectItem>
+            <SelectItem value="URGENT">{t('common.urgent')}</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -143,9 +155,9 @@ export default function TicketListPage() {
 
       {data && data?.tickets?.length === 0 && (
         <p className="text-slate-500">
-          No tickets found.{' '}
+          {t('common.noTicketsFound')}{' '}
           <Link to="/tickets/new" className="text-blue-600 hover:underline">
-            Create one
+            {t('common.createOne')}
           </Link>
         </p>
       )}
@@ -156,13 +168,13 @@ export default function TicketListPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Subject</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Priority</TableHead>
-                  <TableHead>Type</TableHead>
-                  <TableHead>Requester</TableHead>
-                  <TableHead>Assignee</TableHead>
-                  <TableHead>Created</TableHead>
+                  <TableHead>{t('ticket.subject')}</TableHead>
+                  <TableHead>{t('ticket.status')}</TableHead>
+                  <TableHead>{t('ticket.priority')}</TableHead>
+                  <TableHead>{t('ticket.type')}</TableHead>
+                  <TableHead>{t('ticket.requester')}</TableHead>
+                  <TableHead>{t('ticket.assignee')}</TableHead>
+                  <TableHead>{t('common.createdAt')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -225,7 +237,8 @@ export default function TicketListPage() {
           {data && data.meta && (
             <div className="mt-4 flex items-center justify-between text-sm text-slate-500">
               <span>
-                Page {data.meta.page} of {data.meta.totalPages} ({data.meta.total} tickets)
+                {t('common.page')} {data.meta.page} {t('common.of')} {data.meta.totalPages} (
+                {data.meta.total} {t('page.tickets').toLowerCase()})
               </span>
               <div className="flex gap-2">
                 <Button
@@ -234,7 +247,7 @@ export default function TicketListPage() {
                   disabled={page <= 1}
                   onClick={() => setPage((p) => p - 1)}
                 >
-                  Previous
+                  {t('common.previous')}
                 </Button>
                 <Button
                   variant="outline"
@@ -242,7 +255,7 @@ export default function TicketListPage() {
                   disabled={page >= data.meta.totalPages}
                   onClick={() => setPage((p) => p + 1)}
                 >
-                  Next
+                  {t('common.next')}
                 </Button>
               </div>
             </div>

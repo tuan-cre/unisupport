@@ -1,5 +1,7 @@
-import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { io, type Socket } from 'socket.io-client';
 import api from '../../lib/api';
 import AdminLayout from './layout';
 import { Button } from '../../components/ui/button';
@@ -11,9 +13,39 @@ import { Input } from '../../components/ui/input';
 import { Send } from 'lucide-react';
 
 export default function AdminChatPage() {
+  const { t } = useTranslation(['common', 'page']);
   const qc = useQueryClient();
   const [detailId, setDetailId] = useState<string | null>(null);
   const [msg, setMsg] = useState('');
+  const [socket, setSocket] = useState<Socket | null>(null);
+
+  useEffect(() => {
+    const token = localStorage.getItem('accessToken');
+    if (!token) return;
+    const s = io(window.location.origin + '/ws', {
+      auth: { token },
+      transports: ['websocket', 'polling'],
+    });
+    s.on('chat:new', () => {
+      qc.invalidateQueries({ queryKey: ['admin-chat'] });
+    });
+    setSocket(s);
+    return () => {
+      s.disconnect();
+    };
+  }, [qc]);
+
+  useEffect(() => {
+    if (!socket || !detailId) return;
+    socket.emit('join', `chat:${detailId}`);
+    const handler = () => {
+      qc.invalidateQueries({ queryKey: ['admin-chat-detail', detailId] });
+    };
+    socket.on('chat:message', handler);
+    return () => {
+      socket.off('chat:message', handler);
+    };
+  }, [socket, detailId, qc]);
 
   const { data, isLoading } = useQuery({
     queryKey: ['admin-chat'],
@@ -21,6 +53,7 @@ export default function AdminChatPage() {
       const r = await api.get('/chat/conversations');
       return r.data.data;
     },
+    refetchInterval: 15000,
   });
 
   const { data: detail } = useQuery({
@@ -61,7 +94,7 @@ export default function AdminChatPage() {
   return (
     <AdminLayout>
       <div className="mb-4 flex items-center justify-between">
-        <h2 className="text-xl font-semibold text-slate-900">Live Chat</h2>
+        <h2 className="text-xl font-semibold text-slate-900">{t('Live Chat')}</h2>
       </div>
 
       {isLoading && <Skeleton className="h-64 w-full" />}
@@ -90,7 +123,7 @@ export default function AdminChatPage() {
                     : c.visitorName || c.visitorEmail || 'Anonymous'}
                 </span>
                 <span className="ml-auto text-xs text-slate-400">
-                  {c._count?.messages ?? 0} msgs
+                  {c._count?.messages ?? 0} {t('msgs')}
                 </span>
               </div>
             </CardContent>
@@ -115,10 +148,10 @@ export default function AdminChatPage() {
             <div className="flex flex-col gap-3 max-h-[60vh] overflow-y-auto">
               <div className="flex gap-2">
                 <Button size="sm" variant="outline" onClick={() => closeConv.mutate(detail.id)}>
-                  Close
+                  {t('Close')}
                 </Button>
                 <Button size="sm" variant="outline" onClick={() => convert.mutate(detail.id)}>
-                  Convert to ticket
+                  {t('Convert to ticket')}
                 </Button>
               </div>
               {detail.messages?.map((m: any) => (
@@ -146,7 +179,7 @@ export default function AdminChatPage() {
                     if (e.key === 'Enter' && msg.trim())
                       sendMsg.mutate({ id: detail.id, content: msg });
                   }}
-                  placeholder="Reply..."
+                  placeholder={t('Reply...')}
                   className="text-sm"
                 />
                 <Button

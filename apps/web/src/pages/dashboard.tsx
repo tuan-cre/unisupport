@@ -1,12 +1,63 @@
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../hooks/use-auth';
 import api from '../lib/api';
 import AppLayout from '../components/app-layout';
 import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
 import { Skeleton } from '../components/ui/skeleton';
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
+  Legend,
+} from 'recharts';
 import { Ticket, Users, Building2, UserCheck } from 'lucide-react';
+
+interface DashboardStats {
+  totalTickets: number;
+  ticketsByStatus: Record<string, number>;
+  ticketsByPriority: Record<string, number>;
+  recentTickets: RecentTicket[];
+  agentTicketCount: number;
+  totalUsers: number;
+  totalAgents?: number;
+  totalDepartments?: number;
+  myAssigned?: number;
+  myAssignedByStatus?: Record<string, number>;
+}
+
+interface RecentTicket {
+  id: string;
+  subject: string;
+  status: string;
+  priority: string;
+  createdAt: string;
+  requester: { firstName: string; lastName: string; email: string };
+}
+
+const STATUS_COLORS: Record<string, string> = {
+  OPEN: '#3b82f6',
+  IN_PROGRESS: '#f59e0b',
+  PENDING: '#8b5cf6',
+  RESOLVED: '#10b981',
+  CLOSED: '#6b7280',
+};
+
+const PRIORITY_COLORS: Record<string, string> = {
+  LOW: '#6b7280',
+  MEDIUM: '#3b82f6',
+  HIGH: '#f59e0b',
+  URGENT: '#ef4444',
+};
 
 const statusBadge: Record<string, string> = {
   OPEN: 'secondary',
@@ -17,6 +68,7 @@ const statusBadge: Record<string, string> = {
 };
 
 export default function DashboardPage() {
+  const { t } = useTranslation(['common', 'ticket', 'page']);
   const { user } = useAuth();
   const isAgent = user?.role?.name === 'agent';
   const isAdmin = user?.role?.name === 'admin';
@@ -25,14 +77,16 @@ export default function DashboardPage() {
     queryKey: ['dashboard-stats'],
     queryFn: async () => {
       const res = await api.get('/dashboard/stats');
-      return res.data.data as Record<string, any>;
+      return res.data.data as DashboardStats;
     },
   });
 
   return (
     <AppLayout>
       <div className="mb-6 flex items-center justify-between">
-        <h2 className="text-xl font-semibold text-slate-900">Welcome, {user?.firstName}</h2>
+        <h2 className="text-xl font-semibold text-slate-900">
+          {t('common.welcome', { name: user?.firstName })}
+        </h2>
       </div>
 
       {isLoading ? (
@@ -43,12 +97,11 @@ export default function DashboardPage() {
         </div>
       ) : (
         <>
-          {/* KPI cards */}
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <Card>
               <CardHeader className="flex flex-row items-center justify-between pb-2">
                 <CardTitle className="text-sm font-medium text-muted-foreground">
-                  Total tickets
+                  {t('common.totalTickets')}
                 </CardTitle>
                 <Ticket className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
@@ -61,7 +114,7 @@ export default function DashboardPage() {
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between pb-2">
                   <CardTitle className="text-sm font-medium text-muted-foreground">
-                    My assigned
+                    {t('common.myAssigned')}
                   </CardTitle>
                   <UserCheck className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
@@ -76,7 +129,7 @@ export default function DashboardPage() {
                 <Card>
                   <CardHeader className="flex flex-row items-center justify-between pb-2">
                     <CardTitle className="text-sm font-medium text-muted-foreground">
-                      Total users
+                      {t('common.totalUsers')}
                     </CardTitle>
                     <Users className="h-4 w-4 text-muted-foreground" />
                   </CardHeader>
@@ -87,7 +140,7 @@ export default function DashboardPage() {
                 <Card>
                   <CardHeader className="flex flex-row items-center justify-between pb-2">
                     <CardTitle className="text-sm font-medium text-muted-foreground">
-                      Agents
+                      {t('common.agents')}
                     </CardTitle>
                     <UserCheck className="h-4 w-4 text-muted-foreground" />
                   </CardHeader>
@@ -98,7 +151,7 @@ export default function DashboardPage() {
                 <Card>
                   <CardHeader className="flex flex-row items-center justify-between pb-2">
                     <CardTitle className="text-sm font-medium text-muted-foreground">
-                      Departments
+                      {t('common.departments')}
                     </CardTitle>
                     <Building2 className="h-4 w-4 text-muted-foreground" />
                   </CardHeader>
@@ -112,28 +165,70 @@ export default function DashboardPage() {
             )}
           </div>
 
-          {/* Tickets by status */}
           <div className="mt-6 grid gap-6 lg:grid-cols-2">
             <Card>
               <CardHeader>
-                <CardTitle>Tickets by status</CardTitle>
+                <CardTitle>{t('common.ticketsByStatus')}</CardTitle>
               </CardHeader>
               <CardContent>
                 {stats?.ticketsByStatus && Object.keys(stats.ticketsByStatus).length > 0 ? (
-                  <div className="space-y-3">
-                    {Object.entries(stats.ticketsByStatus as Record<string, number>).map(
-                      ([status, count]) => (
-                        <div key={status} className="flex items-center justify-between">
-                          <Badge variant={(statusBadge[status] || 'secondary') as any}>
-                            {status.replace('_', ' ')}
-                          </Badge>
-                          <span className="text-sm font-medium text-slate-900">{count}</span>
-                        </div>
-                      ),
-                    )}
-                  </div>
+                  <ResponsiveContainer width="100%" height={220}>
+                    <BarChart
+                      data={Object.entries(stats.ticketsByStatus).map(([k, v]) => ({
+                        name: k.replace('_', ' '),
+                        count: v,
+                        fill: STATUS_COLORS[k] || '#6b7280',
+                      }))}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                      <XAxis dataKey="name" tick={{ fontSize: 12 }} />
+                      <YAxis allowDecimals={false} tick={{ fontSize: 12 }} />
+                      <Tooltip />
+                      <Bar dataKey="count" radius={[4, 4, 0, 0]}>
+                        {Object.entries(stats.ticketsByStatus).map(([k]) => (
+                          <Cell key={k} fill={STATUS_COLORS[k] || '#6b7280'} />
+                        ))}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
                 ) : (
-                  <p className="text-sm text-slate-400">No tickets yet</p>
+                  <p className="text-sm text-slate-400">{t('common.noTickets')}</p>
+                )}
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>{t('common.ticketsByPriority')}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {stats?.ticketsByPriority && Object.keys(stats.ticketsByPriority).length > 0 ? (
+                  <ResponsiveContainer width="100%" height={220}>
+                    <PieChart>
+                      <Pie
+                        data={Object.entries(stats.ticketsByPriority).map(([k, v]) => ({
+                          name: k,
+                          value: v,
+                        }))}
+                        dataKey="value"
+                        nameKey="name"
+                        cx="50%"
+                        cy="50%"
+                        outerRadius={80}
+                        label={(entry: any) =>
+                          `${entry.name} (${((entry.percent ?? 0) * 100).toFixed(0)}%)`
+                        }
+                      >
+                        {Object.entries(stats.ticketsByPriority).map(([k]) => (
+                          <Cell key={k} fill={PRIORITY_COLORS[k] || '#6b7280'} />
+                        ))}
+                      </Pie>
+                      <Tooltip />
+                      <Legend />
+                    </PieChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <p className="text-sm text-slate-400">{t('common.noTickets')}</p>
                 )}
               </CardContent>
             </Card>
@@ -141,42 +236,47 @@ export default function DashboardPage() {
             {isAgent && stats?.myAssignedByStatus && (
               <Card>
                 <CardHeader>
-                  <CardTitle>My assigned by status</CardTitle>
+                  <CardTitle>{t('common.myAssignedByStatus')}</CardTitle>
                 </CardHeader>
                 <CardContent>
                   {Object.keys(stats.myAssignedByStatus).length > 0 ? (
-                    <div className="space-y-3">
-                      {Object.entries(stats.myAssignedByStatus as Record<string, number>).map(
-                        ([status, count]) => (
-                          <div key={status} className="flex items-center justify-between">
-                            <Badge variant={(statusBadge[status] || 'secondary') as any}>
-                              {status.replace('_', ' ')}
-                            </Badge>
-                            <span className="text-sm font-medium text-slate-900">{count}</span>
-                          </div>
-                        ),
-                      )}
-                    </div>
+                    <ResponsiveContainer width="100%" height={220}>
+                      <BarChart
+                        data={Object.entries(stats.myAssignedByStatus).map(([k, v]) => ({
+                          name: k.replace('_', ' '),
+                          count: v,
+                        }))}
+                      >
+                        <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                        <XAxis dataKey="name" tick={{ fontSize: 12 }} />
+                        <YAxis allowDecimals={false} tick={{ fontSize: 12 }} />
+                        <Tooltip />
+                        <Bar dataKey="count" radius={[4, 4, 0, 0]}>
+                          {Object.entries(stats.myAssignedByStatus).map(([k]) => (
+                            <Cell key={k} fill={STATUS_COLORS[k] || '#6b7280'} />
+                          ))}
+                        </Bar>
+                      </BarChart>
+                    </ResponsiveContainer>
                   ) : (
-                    <p className="text-sm text-slate-400">No assigned tickets</p>
+                    <p className="text-sm text-slate-400">{t('common.noAssignedTickets')}</p>
                   )}
                 </CardContent>
               </Card>
             )}
           </div>
 
-          {/* Recent tickets */}
           <Card className="mt-6">
             <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle>Recent tickets</CardTitle>
+              <CardTitle>{t('common.recentTickets')}</CardTitle>
               <Link to="/tickets" className="text-sm font-medium text-blue-600 hover:underline">
-                View all
+                {t('common.viewAll')}
               </Link>
             </CardHeader>
             <CardContent>
               {stats?.recentTickets && stats.recentTickets.length > 0 ? (
                 <div className="space-y-3">
-                  {stats.recentTickets.map((t: any) => (
+                  {stats.recentTickets.map((t: RecentTicket) => (
                     <Link
                       key={t.id}
                       to={`/tickets/${t.id}`}
@@ -200,7 +300,7 @@ export default function DashboardPage() {
                   ))}
                 </div>
               ) : (
-                <p className="text-sm text-slate-400">No tickets yet</p>
+                <p className="text-sm text-slate-400">{t('common.noTickets')}</p>
               )}
             </CardContent>
           </Card>

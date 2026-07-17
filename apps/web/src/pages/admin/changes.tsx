@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../../lib/api';
@@ -16,6 +17,25 @@ import {
 import { Skeleton } from '../../components/ui/skeleton';
 import { Plus, CheckCircle, XCircle } from 'lucide-react';
 
+interface ChangeApproval {
+  id: string;
+  status: string;
+  comment?: string;
+  approver?: { firstName: string; lastName: string };
+  role?: string;
+}
+
+interface Change {
+  id: string;
+  subject: string;
+  description: string;
+  status: string;
+  riskLevel: string;
+  plannedStart: string;
+  plannedEnd: string;
+  approvals: ChangeApproval[];
+}
+
 const statusColors: Record<string, string> = {
   DRAFT: 'bg-slate-100 text-slate-800',
   PENDING_APPROVAL: 'bg-yellow-100 text-yellow-800',
@@ -29,9 +49,10 @@ const statusColors: Record<string, string> = {
 };
 
 export default function AdminChangesPage() {
+  const { t } = useTranslation(['common', 'page']);
   const qc = useQueryClient();
   const [showCreate, setShowCreate] = useState(false);
-  const [detail, setDetail] = useState<any>(null);
+  const [detail, setDetail] = useState<Change | null>(null);
   const [approvalComments, setApprovalComments] = useState<Record<string, string>>({});
   const [form, setForm] = useState({
     subject: '',
@@ -45,12 +66,18 @@ export default function AdminChangesPage() {
     queryKey: ['admin-changes'],
     queryFn: async () => {
       const r = await api.get('/changes');
-      return r.data.data;
+      return r.data.data as Change[];
     },
   });
 
   const create = useMutation({
-    mutationFn: (body: any) => api.post('/changes', body),
+    mutationFn: (body: {
+      subject: string;
+      description: string;
+      riskLevel: string;
+      plannedStart: string;
+      plannedEnd: string;
+    }) => api.post('/changes', body),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['admin-changes'] });
       setShowCreate(false);
@@ -86,50 +113,50 @@ export default function AdminChangesPage() {
   return (
     <AdminLayout>
       <div className="mb-4 flex items-center justify-between">
-        <h2 className="text-xl font-semibold text-slate-900">Change Requests</h2>
+        <h2 className="text-xl font-semibold text-slate-900">{t('Change Requests')}</h2>
         <Dialog open={showCreate} onOpenChange={setShowCreate}>
           <DialogTrigger asChild>
             <Button size="sm">
               <Plus className="mr-1 h-4 w-4" />
-              Create
+              {t('Create')}
             </Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>New Change Request</DialogTitle>
+              <DialogTitle>{t('New Change Request')}</DialogTitle>
             </DialogHeader>
             <div className="flex flex-col gap-3">
               <Input
-                placeholder="Subject"
+                placeholder={t('Subject')}
                 value={form.subject}
                 onChange={(e) => setForm({ ...form, subject: e.target.value })}
               />
               <textarea
                 className="rounded-md border border-slate-200 p-2 text-sm"
                 rows={3}
-                placeholder="Description"
+                placeholder={t('Description')}
                 value={form.description}
                 onChange={(e) => setForm({ ...form, description: e.target.value })}
               />
               <Input
-                placeholder="Risk level (low/medium/high/critical)"
+                placeholder={t('Risk level (low/medium/high/critical)')}
                 value={form.riskLevel}
                 onChange={(e) => setForm({ ...form, riskLevel: e.target.value })}
               />
               <Input
                 type="date"
-                placeholder="Planned start"
+                placeholder={t('Planned start')}
                 value={form.plannedStart}
                 onChange={(e) => setForm({ ...form, plannedStart: e.target.value })}
               />
               <Input
                 type="date"
-                placeholder="Planned end"
+                placeholder={t('Planned end')}
                 value={form.plannedEnd}
                 onChange={(e) => setForm({ ...form, plannedEnd: e.target.value })}
               />
               <Button onClick={() => create.mutate(form)} disabled={create.isPending}>
-                Create
+                {t('Create')}
               </Button>
             </div>
           </DialogContent>
@@ -138,7 +165,7 @@ export default function AdminChangesPage() {
 
       {isLoading && <Skeleton className="h-64 w-full" />}
       <div className="grid gap-3">
-        {data?.map((c: any) => (
+        {data?.map((c: Change) => (
           <Card key={c.id} className="cursor-pointer hover:shadow-sm" onClick={() => setDetail(c)}>
             <CardContent className="p-4">
               <div className="mb-1 flex items-center gap-2">
@@ -147,11 +174,15 @@ export default function AdminChangesPage() {
               </div>
               <p className="text-xs text-slate-500 line-clamp-1">{c.description}</p>
               <div className="mt-1 flex gap-3 text-xs text-slate-400">
-                {c.riskLevel && <span>Risk: {c.riskLevel}</span>}
+                {c.riskLevel && (
+                  <span>
+                    {t('Risk')}: {c.riskLevel}
+                  </span>
+                )}
                 {c.approvals?.length > 0 && (
                   <span>
-                    {c.approvals.filter((a: any) => a.status === 'APPROVED').length}/
-                    {c.approvals.length} approved
+                    {c.approvals.filter((a: ChangeApproval) => a.status === 'APPROVED').length}/
+                    {c.approvals.length} {t('approved')}
                   </span>
                 )}
               </div>
@@ -175,49 +206,28 @@ export default function AdminChangesPage() {
               <p className="text-sm text-slate-600">{detail.description}</p>
               <div className="flex flex-wrap gap-2 text-xs text-slate-500">
                 <Badge className={statusColors[detail.status]}>{detail.status}</Badge>
-                <span>Risk: {detail.riskLevel || 'N/A'}</span>
+                <span>
+                  {t('Risk')}: {detail.riskLevel || 'N/A'}
+                </span>
                 {detail.plannedStart && (
                   <span>
-                    Planned: {detail.plannedStart?.slice(0, 10)} – {detail.plannedEnd?.slice(0, 10)}
+                    {t('Planned')}: {detail.plannedStart?.slice(0, 10)} –{' '}
+                    {detail.plannedEnd?.slice(0, 10)}
                   </span>
                 )}
               </div>
 
-              <div className="flex gap-2">
-                {[
-                  'DRAFT',
-                  'PENDING_APPROVAL',
-                  'APPROVED',
-                  'IN_PROGRESS',
-                  'IMPLEMENTED',
-                  'REVIEWED',
-                  'CLOSED',
-                  'ROLLED_BACK',
-                  'REJECTED',
-                ].map((s) => (
-                  <Button
-                    key={s}
-                    variant="outline"
-                    size="sm"
-                    className="text-xs"
-                    onClick={() => updateStatus.mutate({ id: detail.id, status: s })}
-                  >
-                    {s.replace(/_/g, ' ')}
-                  </Button>
-                ))}
-              </div>
-
               <div>
                 <h4 className="mb-2 text-sm font-semibold text-slate-900">
-                  Approvals ({detail.approvals?.length || 0})
+                  {t('Approvals')} ({detail.approvals?.length || 0})
                 </h4>
-                {detail.approvals?.map((a: any) => (
+                {detail.approvals?.map((a: ChangeApproval) => (
                   <div key={a.id} className="mb-2 rounded-lg border p-2 text-sm">
                     <div className="flex items-center justify-between">
                       <span className="font-medium">
                         {a.approver
                           ? `${a.approver.firstName} ${a.approver.lastName}`
-                          : a.role || 'Unassigned'}
+                          : a.role || t('Unassigned')}
                       </span>
                       <Badge
                         className={
@@ -235,7 +245,7 @@ export default function AdminChangesPage() {
                     {a.status === 'PENDING' && (
                       <div className="mt-2 flex gap-2">
                         <Input
-                          placeholder="Comment"
+                          placeholder={t('Comment')}
                           value={approvalComments[a.id] || ''}
                           onChange={(e) =>
                             setApprovalComments((prev) => ({ ...prev, [a.id]: e.target.value }))
