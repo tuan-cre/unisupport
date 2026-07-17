@@ -21,7 +21,7 @@ jobs:
         with:
           host: ${{ secrets.HOST }}
           username: ${{ secrets.USERNAME }}
-          key: ${{ secrets.SSH_KEY }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
           script: |
             cd /home/lhtuan/unisupport
             git pull
