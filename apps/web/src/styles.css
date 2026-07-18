@@ -76,6 +76,10 @@
     @apply border-border outline-ring/50;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground selection:bg-blue-200/70 dark:selection:bg-blue-800/50;
+  }
+
+  .card-hover {
+    @apply transition-all duration-200 hover:shadow-md;
   }
 }

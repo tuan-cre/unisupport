@@ -13,14 +13,26 @@ echo "=== Pulling latest code ==="
 cd "$REPO_DIR"
 git pull origin main
 
-echo "=== Installing dependencies ==="
-npm ci
+# Only reinstall if dependency files changed
+if git diff HEAD@{1} --name-only 2>/dev/null | grep -qE '^(package\.json|package-lock\.json|npm-shrinkwrap\.json)$' || \
+   [ ! -d node_modules ]; then
+  echo "=== Dependencies changed, reinstalling ==="
+  npm ci
+else
+  echo "=== Dependencies up to date, skipping install ==="
+fi
 
 echo "=== Building shared package ==="
 npm run build --workspace=packages/shared
 
-echo "=== Generating Prisma client ==="
-npx prisma generate --schema=apps/api/prisma/schema.prisma
+# Only regenerate Prisma client if schema changed
+if git diff HEAD@{1} --name-only 2>/dev/null | grep -q 'schema\.prisma$' || \
+   [ ! -d node_modules/.prisma ]; then
+  echo "=== Generating Prisma client ==="
+  npx prisma generate --schema=apps/api/prisma/schema.prisma
+else
+  echo "=== Prisma client up to date, skipping ==="
+fi
 
 echo "=== Building API ==="
 npm run build --workspace=apps/api

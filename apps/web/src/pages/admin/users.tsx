@@ -320,7 +320,8 @@ export default function AdminUsersPage() {
 
       {data && data.users.length > 0 && (
         <>
-          <div className="overflow-hidden rounded-xl border bg-card">
+          {/* Desktop table */}
+          <div className="hidden md:block overflow-hidden rounded-xl border bg-card">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -359,6 +360,43 @@ export default function AdminUsersPage() {
                 ))}
               </TableBody>
             </Table>
+          </div>
+
+          {/* Mobile cards */}
+          <div className="md:hidden space-y-3">
+            {data.users.map((u) => (
+              <div key={u.id} className="rounded-xl border bg-card p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0 flex-1">
+                    <p className="font-medium text-foreground">
+                      {u.firstName} {u.lastName}
+                    </p>
+                    <p className="text-sm text-muted-foreground truncate">{u.email}</p>
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      <Badge
+                        variant={u.status === 'ACTIVE' ? 'default' : 'secondary'}
+                        className="text-xs"
+                      >
+                        {u.status}
+                      </Badge>
+                      {u.role && (
+                        <span className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
+                          {u.role.name}
+                        </span>
+                      )}
+                      {u.department && (
+                        <span className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
+                          {u.department.name}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <Button variant="outline" size="sm" onClick={() => setEditingUser(u)}>
+                    {t('Edit')}
+                  </Button>
+                </div>
+              </div>
+            ))}
           </div>
 
           <div className="mt-4 flex items-center justify-between text-sm text-muted-foreground">

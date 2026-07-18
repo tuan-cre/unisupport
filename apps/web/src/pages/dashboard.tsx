@@ -98,7 +98,7 @@ export default function DashboardPage() {
       ) : (
         <>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <Card>
+            <Card className="border-l-4 border-l-primary shadow-sm">
               <CardHeader className="flex flex-row items-center justify-between pb-2">
                 <CardTitle className="text-sm font-medium text-muted-foreground">
                   {t('common.totalTickets')}
@@ -111,7 +111,7 @@ export default function DashboardPage() {
             </Card>
 
             {isAgent && (
-              <Card>
+              <Card className="border-l-4 border-l-blue-500 shadow-sm">
                 <CardHeader className="flex flex-row items-center justify-between pb-2">
                   <CardTitle className="text-sm font-medium text-muted-foreground">
                     {t('common.myAssigned')}
@@ -126,7 +126,7 @@ export default function DashboardPage() {
 
             {isAdmin && (
               <>
-                <Card>
+                <Card className="border-l-4 border-l-emerald-500 shadow-sm">
                   <CardHeader className="flex flex-row items-center justify-between pb-2">
                     <CardTitle className="text-sm font-medium text-muted-foreground">
                       {t('common.totalUsers')}
@@ -137,7 +137,7 @@ export default function DashboardPage() {
                     <p className="text-2xl font-bold text-foreground">{stats?.totalUsers ?? 0}</p>
                   </CardContent>
                 </Card>
-                <Card>
+                <Card className="border-l-4 border-l-violet-500 shadow-sm">
                   <CardHeader className="flex flex-row items-center justify-between pb-2">
                     <CardTitle className="text-sm font-medium text-muted-foreground">
                       {t('common.agents')}
@@ -148,7 +148,7 @@ export default function DashboardPage() {
                     <p className="text-2xl font-bold text-foreground">{stats?.totalAgents ?? 0}</p>
                   </CardContent>
                 </Card>
-                <Card>
+                <Card className="border-l-4 border-l-amber-500 shadow-sm">
                   <CardHeader className="flex flex-row items-center justify-between pb-2">
                     <CardTitle className="text-sm font-medium text-muted-foreground">
                       {t('common.departments')}
@@ -280,7 +280,7 @@ export default function DashboardPage() {
                     <Link
                       key={t.id}
                       to={`/tickets/${t.id}`}
-                      className="flex items-center justify-between rounded-lg border p-3 transition-colors hover:bg-muted"
+                      className="flex items-center justify-between rounded-lg border p-3 transition-all duration-200 hover:bg-muted/50 hover:shadow-sm"
                     >
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-sm font-medium text-foreground">{t.subject}</p>

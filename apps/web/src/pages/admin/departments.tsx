@@ -135,50 +135,89 @@ export default function AdminDepartmentsPage() {
       )}
 
       {depts && depts.length > 0 && (
-        <div className="overflow-hidden rounded-xl border bg-card">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b bg-muted text-left text-sm font-medium text-muted-foreground">
-                  <th className="px-4 py-3">{t('Name')}</th>
-                  <th className="px-4 py-3 text-right">{t('Actions')}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {depts.map((d) => (
-                  <tr key={d.id} className="border-b last:border-0">
-                    <td className="px-4 py-3 text-sm font-medium text-foreground">{d.name}</td>
-                    <td className="px-4 py-3 text-right">
-                      <div className="flex justify-end gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => {
-                            setEditingDept(d);
-                            setShowForm(true);
-                          }}
-                        >
-                          {t('Edit')}
-                        </Button>
-                        <Button
-                          variant="destructive"
-                          size="sm"
-                          onClick={() => {
-                            if (confirm(t('Delete department "{{name}}"?', { name: d.name }))) {
-                              deleteMutation.mutate(d.id);
-                            }
-                          }}
-                        >
-                          {t('Delete')}
-                        </Button>
-                      </div>
-                    </td>
+        <>
+          {/* Desktop table */}
+          <div className="hidden md:block overflow-hidden rounded-xl border bg-card">
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b bg-muted text-left text-sm font-medium text-muted-foreground">
+                    <th className="px-4 py-3">{t('Name')}</th>
+                    <th className="px-4 py-3 text-right">{t('Actions')}</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {depts.map((d) => (
+                    <tr key={d.id} className="border-b last:border-0">
+                      <td className="px-4 py-3 text-sm font-medium text-foreground">{d.name}</td>
+                      <td className="px-4 py-3 text-right">
+                        <div className="flex justify-end gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              setEditingDept(d);
+                              setShowForm(true);
+                            }}
+                          >
+                            {t('Edit')}
+                          </Button>
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            onClick={() => {
+                              if (confirm(t('Delete department "{{name}}"?', { name: d.name }))) {
+                                deleteMutation.mutate(d.id);
+                              }
+                            }}
+                          >
+                            {t('Delete')}
+                          </Button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
-        </div>
+
+          {/* Mobile cards */}
+          <div className="md:hidden space-y-3">
+            {depts.map((d) => (
+              <div key={d.id} className="rounded-xl border bg-card p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0 flex-1">
+                    <p className="font-medium text-foreground">{d.name}</p>
+                  </div>
+                  <div className="flex gap-2 shrink-0">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setEditingDept(d);
+                        setShowForm(true);
+                      }}
+                    >
+                      {t('Edit')}
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => {
+                        if (confirm(t('Delete department "{{name}}"?', { name: d.name }))) {
+                          deleteMutation.mutate(d.id);
+                        }
+                      }}
+                    >
+                      {t('Delete')}
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </>
       )}
 
       {showForm && (

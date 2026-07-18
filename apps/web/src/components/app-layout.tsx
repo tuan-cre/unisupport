@@ -12,7 +12,19 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
 } from './ui/dropdown-menu';
-import { User, LogOut, KeyRound, Plus, Bell, Shield, BookOpen, Sun, Moon } from 'lucide-react';
+import {
+  User,
+  LogOut,
+  KeyRound,
+  Plus,
+  Bell,
+  Shield,
+  BookOpen,
+  Sun,
+  Moon,
+  LayoutDashboard,
+  Ticket,
+} from 'lucide-react';
 import { LangSwitch } from './lang-switch';
 
 interface AppLayoutProps {
@@ -56,7 +68,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="sticky top-0 z-40 border-b bg-background">
+      <header className="sticky top-0 z-40 border-b bg-background/80 backdrop-blur-md">
         <div className="mx-auto flex h-14 max-w-5xl items-center justify-between px-6">
           <button
             onClick={() => navigate('/tickets')}
@@ -66,10 +78,28 @@ export default function AppLayout({ children }: AppLayoutProps) {
           </button>
 
           <div className="flex items-center gap-1 sm:gap-3">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate('/')}
+              className="hidden sm:inline-flex"
+            >
+              <LayoutDashboard className="mr-1 h-4 w-4" />
+              {t('nav.dashboard')}
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate('/tickets')}
+              className="hidden sm:inline-flex"
+            >
+              <Ticket className="mr-1 h-4 w-4" />
+              {t('page.tickets')}
+            </Button>
             <LangSwitch />
             <button
               onClick={() => setTheme((p) => (p === 'light' ? 'dark' : 'light'))}
-              className="rounded-lg p-2 text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+              className="rounded-lg p-2 text-muted-foreground hover:bg-accent hover:text-foreground transition-colors hidden sm:block"
               aria-label="Toggle dark mode"
             >
               {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
@@ -82,15 +112,6 @@ export default function AppLayout({ children }: AppLayoutProps) {
             >
               <BookOpen className="mr-1 h-4 w-4" />
               {t('page.knowledgeBase')}
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="sm:hidden h-9 w-9"
-              onClick={() => navigate('/kb')}
-              aria-label={t('page.knowledgeBase')}
-            >
-              <BookOpen className="h-4 w-4" />
             </Button>
             <Button variant="outline" size="sm" onClick={() => navigate('/tickets/new')}>
               <Plus className="h-4 w-4 sm:mr-1" />

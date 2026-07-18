@@ -43,12 +43,12 @@ export default function LoginPage() {
   };
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-gradient-to-b from-background via-background to-background dark:from-background dark:via-background dark:to-background p-8">
-      <Card className="w-full max-w-sm">
+    <main className="flex min-h-screen items-center justify-center bg-gradient-to-br from-blue-50 via-background to-background dark:from-blue-950/20 dark:via-background dark:to-background p-8">
+      <Card className="w-full max-w-sm shadow-xl">
         <CardHeader className="text-center">
-          <p className="mb-1 text-xs font-bold uppercase tracking-[0.18em] text-blue-600">
-            UniSupport
-          </p>
+          <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-blue-600">
+            <span className="text-lg font-bold text-white">U</span>
+          </div>
           <CardTitle className="text-2xl">{t('auth.signIn')}</CardTitle>
         </CardHeader>
         <CardContent>

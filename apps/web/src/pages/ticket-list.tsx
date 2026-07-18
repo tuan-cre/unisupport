@@ -164,7 +164,8 @@ export default function TicketListPage() {
 
       {data && data?.tickets?.length > 0 && (
         <>
-          <div className="overflow-hidden rounded-xl border bg-card">
+          {/* Desktop table */}
+          <div className="hidden md:block overflow-hidden rounded-xl border bg-card">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -181,7 +182,7 @@ export default function TicketListPage() {
                 {data.tickets.map((ticket) => (
                   <TableRow
                     key={ticket.id}
-                    className="cursor-pointer"
+                    className="cursor-pointer transition-colors hover:bg-muted/50"
                     onClick={() => navigate(`/tickets/${ticket.id}`)}
                   >
                     <TableCell>
@@ -232,6 +233,48 @@ export default function TicketListPage() {
                 ))}
               </TableBody>
             </Table>
+          </div>
+
+          {/* Mobile cards */}
+          <div className="md:hidden space-y-3">
+            {data.tickets.map((ticket) => (
+              <button
+                key={ticket.id}
+                onClick={() => navigate(`/tickets/${ticket.id}`)}
+                className="w-full rounded-xl border bg-card p-4 text-left transition-colors hover:bg-accent"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0 flex-1">
+                    <p className="font-medium text-foreground line-clamp-2">{ticket.subject}</p>
+                    {ticket.tags && ticket.tags.length > 0 && (
+                      <div className="mt-2 flex flex-wrap gap-1">
+                        {ticket.tags.slice(0, 3).map((tt) => (
+                          <span
+                            key={tt.tag.id}
+                            className="rounded-full bg-muted px-1.5 py-0 text-[10px] font-medium text-muted-foreground"
+                          >
+                            {tt.tag.name}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  <Badge
+                    variant={(statusBadge[ticket.status] || 'secondary') as any}
+                    className="shrink-0 text-xs"
+                  >
+                    {ticket.status.replace('_', ' ')}
+                  </Badge>
+                </div>
+                <div className="mt-3 flex items-center gap-3 text-xs text-muted-foreground">
+                  <span className={priorityColor[ticket.priority] || ''}>{ticket.priority}</span>
+                  <span>
+                    {ticket.requester.firstName} {ticket.requester.lastName}
+                  </span>
+                  <span>{new Date(ticket.createdAt).toLocaleDateString()}</span>
+                </div>
+              </button>
+            ))}
           </div>
 
           {data && data.meta && (

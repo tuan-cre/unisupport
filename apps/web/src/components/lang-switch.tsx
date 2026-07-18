@@ -1,5 +1,4 @@
 import { useTranslation } from 'react-i18next';
-import { Globe } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -31,8 +30,7 @@ export function LangSwitch() {
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" size="icon" className="h-9 w-9" aria-label="Switch language">
-          <Globe className="h-[1.1rem] w-[1.1rem]" />
-          <span className="ml-1 text-xs">{current.flag}</span>
+          <span className="text-base">{current.flag}</span>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-36">
