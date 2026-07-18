@@ -23,6 +23,5 @@ screenshots/
 .idea/
 Thumbs.db
 
-# Project docs (not part of source)
+# Local dev guide (keep on disk, not in repo)
 AGENTS.md
-ROADMAP.md

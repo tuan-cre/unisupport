@@ -63,5 +63,4 @@ Admin login: `admin@unisupport.local` / `admin123`
 
 ## Docs
 
-- [`AGENTS.md`](./AGENTS.md) — agent guide (conventions, patterns, pitfalls)
-- [`ROADMAP.md`](./ROADMAP.md) — phased implementation plan (23 phases + bug bash)
+- [`ROADMAP.md`](./ROADMAP.md) — phased implementation plan (25 phases + 2 bug bashes)
