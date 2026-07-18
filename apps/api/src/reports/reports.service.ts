@@ -12,25 +12,27 @@ export class ReportsService {
 
     const rows = await this.prisma.$queryRaw<Array<{ date: Date; count: bigint }>>`
       SELECT DATE_TRUNC('day', "createdAt")::date AS date, COUNT(*)::int AS count
-      FROM "Ticket"
+      FROM "tickets"
       WHERE "createdAt" >= ${start} AND "createdAt" <= ${end}
       GROUP BY DATE_TRUNC('day', "createdAt")
       ORDER BY date ASC
     `;
 
-  const toDateStr = (d: Date | string) => new Date(d).toISOString().slice(0, 10);
-  const byDate = rows.map((r) => ({
-    date: toDateStr(r.date),
-    total: Number(r.count),
-    open: 0,
-    resolved: 0,
-    closed: 0,
-  }));
+    const toDateStr = (d: Date | string) => new Date(d).toISOString().slice(0, 10);
+    const byDate = rows.map((r) => ({
+      date: toDateStr(r.date),
+      total: Number(r.count),
+      open: 0,
+      resolved: 0,
+      closed: 0,
+    }));
 
-  // Count by status for each date
-  const statusRows = await this.prisma.$queryRaw<Array<{ date: Date; status: string; count: bigint }>>`
+    // Count by status for each date
+    const statusRows = await this.prisma.$queryRaw<
+      Array<{ date: Date; status: string; count: bigint }>
+    >`
       SELECT DATE_TRUNC('day', "createdAt")::date AS date, status, COUNT(*)::int AS count
-      FROM "Ticket"
+      FROM "tickets"
       WHERE "createdAt" >= ${start} AND "createdAt" <= ${end}
       GROUP BY DATE_TRUNC('day', "createdAt"), status
       ORDER BY date ASC
@@ -254,16 +256,13 @@ export class ReportsService {
   async generatePdf(type: string, startDate?: string, endDate?: string): Promise<Buffer> {
     const typeLabels: Record<string, string> = {
       'ticket-volume': 'Ticket Volume',
-      'sla': 'SLA Compliance',
+      sla: 'SLA Compliance',
       'agent-performance': 'Agent Performance',
-      'csat': 'Customer Satisfaction',
+      csat: 'Customer Satisfaction',
     };
 
     const displayType = typeLabels[type] || type;
-    const period =
-      startDate && endDate
-        ? `${startDate} to ${endDate}`
-        : `Last 30 days`;
+    const period = startDate && endDate ? `${startDate} to ${endDate}` : `Last 30 days`;
 
     const doc = new PDFDocument({ margin: 50, size: 'A4' });
     const buffers: Buffer[] = [];
@@ -288,12 +287,9 @@ export class ReportsService {
     const drawFooter = () => {
       const now = new Date();
       doc.fontSize(8).font('Helvetica');
-      doc.text(
-        `Generated: ${now.toISOString().slice(0, 19).replace('T', ' ')}`,
-        leftMargin,
-        780,
-        { align: 'center' },
-      );
+      doc.text(`Generated: ${now.toISOString().slice(0, 19).replace('T', ' ')}`, leftMargin, 780, {
+        align: 'center',
+      });
     };
 
     const drawTableRow = (cols: string[], yPos: number, bold = false) => {
@@ -338,8 +334,20 @@ export class ReportsService {
         const report = await this.slaCompliance(startDate, endDate);
         y = drawTableHeader(['Metric', 'Met', 'Breached', 'Total', 'Rate'], y);
         const slaRows = [
-          ['Response SLA', String(report.response.met), String(report.response.breached), String(report.response.total), `${report.response.complianceRate}%`],
-          ['Resolution SLA', String(report.resolution.met), String(report.resolution.breached), String(report.resolution.total), `${report.resolution.complianceRate}%`],
+          [
+            'Response SLA',
+            String(report.response.met),
+            String(report.response.breached),
+            String(report.response.total),
+            `${report.response.complianceRate}%`,
+          ],
+          [
+            'Resolution SLA',
+            String(report.resolution.met),
+            String(report.resolution.breached),
+            String(report.resolution.total),
+            `${report.resolution.complianceRate}%`,
+          ],
         ];
         for (const row of slaRows) {
           drawTableRow(row, y);
@@ -349,14 +357,24 @@ export class ReportsService {
       }
       case 'agent-performance': {
         const report = await this.agentPerformance(startDate, endDate);
-        y = drawTableHeader(['Agent', 'Total', 'Resolved', 'Open', 'Avg Res (min)', 'Logged (min)'], y);
+        y = drawTableHeader(
+          ['Agent', 'Total', 'Resolved', 'Open', 'Avg Res (min)', 'Logged (min)'],
+          y,
+        );
         for (const a of report) {
           if (y > 730) {
             doc.addPage();
             y = 50;
           }
           drawTableRow(
-            [a.agentName, String(a.totalTickets), String(a.resolved), String(a.open), String(a.avgResolutionMinutes), String(a.totalLoggedMinutes)],
+            [
+              a.agentName,
+              String(a.totalTickets),
+              String(a.resolved),
+              String(a.open),
+              String(a.avgResolutionMinutes),
+              String(a.totalLoggedMinutes),
+            ],
             y,
           );
           y += 16;

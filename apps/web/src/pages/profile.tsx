@@ -60,7 +60,7 @@ export default function ProfilePage() {
               <label className="text-sm font-medium">{t('common.lastLabel')}</label>
               <Input value={lastName} onChange={(e) => setLastName(e.target.value)} />
             </div>
-            <div className="flex gap-2 pt-2">
+            <div className="flex justify-center gap-2 pt-2">
               <Button onClick={handleSave} disabled={saving}>
                 {saving ? t('common.saving') : t('common.saveChanges')}
               </Button>
@@ -82,7 +82,9 @@ export default function ProfilePage() {
             </p>
             <p className="text-sm text-muted-foreground">
               {t('common.roleLabel')}:{' '}
-              <span className="font-medium text-foreground">{user?.role?.name ?? 'None'}</span>
+              <span className="font-medium text-foreground">
+                {user?.role?.name ?? t('common.none')}
+              </span>
             </p>
             <p className="text-sm text-muted-foreground">
               {t('auth.emailVerified')}:{' '}
@@ -104,7 +106,7 @@ export default function ProfilePage() {
                 <Badge variant="secondary">{t('common.disabled')}</Badge>
               )}
             </p>
-            <div className="flex gap-2 pt-1">
+            <div className="flex justify-center gap-2 pt-1">
               <Button variant="outline" onClick={() => navigate('/change-password')}>
                 {t('page.changePassword')}
               </Button>
@@ -134,6 +136,43 @@ export default function ProfilePage() {
                 </Button>
               )}
             </div>
+          </CardContent>
+        </Card>
+
+        <Card className="mt-6">
+          <CardHeader>
+            <CardTitle>{t('auth.privacyData')}</CardTitle>
+          </CardHeader>
+          <CardContent className="flex justify-center gap-3">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={async () => {
+                const r = await api.get('/auth/me/export');
+                const blob = new Blob([JSON.stringify(r.data.data, null, 2)], {
+                  type: 'application/json',
+                });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'my-data.json';
+                a.click();
+                URL.revokeObjectURL(url);
+              }}
+            >
+              {t('auth.exportMyData')}
+            </Button>
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={async () => {
+                if (!window.confirm(t('auth.anonymizeConfirm'))) return;
+                await api.delete('/auth/me/anonymize');
+                window.location.href = '/login';
+              }}
+            >
+              {t('auth.anonymizeAccount')}
+            </Button>
           </CardContent>
         </Card>
       </div>
@@ -185,43 +224,6 @@ export default function ProfilePage() {
           </div>
         </DialogContent>
       </Dialog>
-
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle>{t('auth.privacyData')}</CardTitle>
-        </CardHeader>
-        <CardContent className="flex gap-3">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={async () => {
-              const r = await api.get('/auth/me/export');
-              const blob = new Blob([JSON.stringify(r.data.data, null, 2)], {
-                type: 'application/json',
-              });
-              const url = URL.createObjectURL(blob);
-              const a = document.createElement('a');
-              a.href = url;
-              a.download = 'my-data.json';
-              a.click();
-              URL.revokeObjectURL(url);
-            }}
-          >
-            {t('auth.exportMyData')}
-          </Button>
-          <Button
-            variant="destructive"
-            size="sm"
-            onClick={async () => {
-              if (!window.confirm(t('auth.anonymizeConfirm'))) return;
-              await api.delete('/auth/me/anonymize');
-              window.location.href = '/login';
-            }}
-          >
-            {t('auth.anonymizeAccount')}
-          </Button>
-        </CardContent>
-      </Card>
     </AppLayout>
   );
 }

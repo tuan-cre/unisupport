@@ -441,19 +441,19 @@ export class AuthService {
     return crypto.createHash('sha256').update(token).digest('hex');
   }
 
-  async handleSamlLogin(profile: {
-    nameID: string;
+  async handleGoogleLogin(profile: {
+    googleId: string;
     email: string;
     firstName: string;
     lastName: string;
   }) {
-    let user = await this.prisma.user.findUnique({ where: { samlId: profile.nameID } });
+    let user = await this.prisma.user.findUnique({ where: { googleId: profile.googleId } });
     if (!user) {
       user = await this.prisma.user.findUnique({ where: { email: profile.email } });
       if (user) {
         await this.prisma.user.update({
           where: { id: user.id },
-          data: { samlId: profile.nameID },
+          data: { googleId: profile.googleId },
         });
       }
     }
@@ -465,7 +465,7 @@ export class AuthService {
           firstName: profile.firstName || profile.email.split('@')[0],
           lastName: profile.lastName || '',
           passwordHash: crypto.randomBytes(32).toString('hex'),
-          samlId: profile.nameID,
+          googleId: profile.googleId,
           roleId: defaultRole?.id ?? undefined,
           emailVerifiedAt: new Date(),
         },
@@ -478,18 +478,18 @@ export class AuthService {
     return { user, ...tokens };
   }
 
-  signSamlToken(userId: string): string {
-    return this.jwt.sign({ sub: userId, type: 'saml_exchange' }, { expiresIn: '1m' });
+  signExchangeToken(userId: string): string {
+    return this.jwt.sign({ sub: userId, type: 'oauth_exchange' }, { expiresIn: '1m' });
   }
 
-  async exchangeSamlToken(samlToken: string) {
+  async exchangeGoogleToken(token: string) {
     let payload: { sub: string; type: string };
     try {
-      payload = this.jwt.verify(samlToken);
+      payload = this.jwt.verify(token);
     } catch {
-      throw new UnauthorizedException('Invalid or expired SAML token');
+      throw new UnauthorizedException('Invalid or expired token');
     }
-    if (payload.type !== 'saml_exchange') {
+    if (payload.type !== 'oauth_exchange') {
       throw new UnauthorizedException('Invalid token type');
     }
     const user = await this.userWithRole(payload.sub);

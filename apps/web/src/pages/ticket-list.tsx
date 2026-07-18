@@ -23,6 +23,7 @@ import {
 } from '../components/ui/table';
 import AppLayout from '../components/app-layout';
 import { Skeleton } from '../components/ui/skeleton';
+import { Paperclip } from 'lucide-react';
 
 interface Ticket {
   id: string;
@@ -34,6 +35,7 @@ interface Ticket {
   requester: { firstName: string; lastName: string };
   assignee: { firstName: string; lastName: string } | null;
   tags?: { tag: { id: string; name: string } }[];
+  attachments?: { id: string }[];
 }
 
 interface Meta {
@@ -188,27 +190,38 @@ export default function TicketListPage() {
                     <TableCell>
                       <div className="max-w-64">
                         <p className="truncate font-medium text-foreground">{ticket.subject}</p>
-                        {ticket.tags && ticket.tags.length > 0 && (
-                          <div className="mt-1 flex flex-wrap gap-1">
-                            {ticket.tags.slice(0, 3).map((tt) => (
-                              <span
-                                key={tt.tag.id}
-                                className="rounded-full bg-muted px-1.5 py-0 text-[10px] font-medium text-muted-foreground"
-                              >
-                                {tt.tag.name}
-                              </span>
-                            ))}
-                            {ticket.tags.length > 3 && (
-                              <span className="text-[10px] text-muted-foreground">
-                                +{ticket.tags.length - 3}
-                              </span>
-                            )}
-                          </div>
-                        )}
+                        <div className="mt-1 flex flex-wrap items-center gap-2">
+                          {ticket.tags && ticket.tags.length > 0 && (
+                            <>
+                              {ticket.tags.slice(0, 3).map((tt) => (
+                                <span
+                                  key={tt.tag.id}
+                                  className="rounded-full bg-muted px-1.5 py-0 text-[10px] font-medium text-muted-foreground"
+                                >
+                                  {tt.tag.name}
+                                </span>
+                              ))}
+                              {ticket.tags.length > 3 && (
+                                <span className="text-[10px] text-muted-foreground">
+                                  +{ticket.tags.length - 3}
+                                </span>
+                              )}
+                            </>
+                          )}
+                          {ticket.attachments && ticket.attachments.length > 0 && (
+                            <span className="flex items-center gap-0.5 text-[10px] text-muted-foreground">
+                              <Paperclip className="h-3 w-3" />
+                              {ticket.attachments.length}
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </TableCell>
                     <TableCell>
-                      <Badge variant={(statusBadge[ticket.status] || 'secondary') as any}>
+                      <Badge
+                        variant={(statusBadge[ticket.status] || 'secondary') as any}
+                        className="whitespace-nowrap"
+                      >
                         {ticket.status.replace('_', ' ')}
                       </Badge>
                     </TableCell>
@@ -246,22 +259,30 @@ export default function TicketListPage() {
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0 flex-1">
                     <p className="font-medium text-foreground line-clamp-2">{ticket.subject}</p>
-                    {ticket.tags && ticket.tags.length > 0 && (
-                      <div className="mt-2 flex flex-wrap gap-1">
-                        {ticket.tags.slice(0, 3).map((tt) => (
-                          <span
-                            key={tt.tag.id}
-                            className="rounded-full bg-muted px-1.5 py-0 text-[10px] font-medium text-muted-foreground"
-                          >
-                            {tt.tag.name}
-                          </span>
-                        ))}
-                      </div>
-                    )}
+                    <div className="mt-2 flex flex-wrap items-center gap-2">
+                      {ticket.tags && ticket.tags.length > 0 && (
+                        <>
+                          {ticket.tags.slice(0, 3).map((tt) => (
+                            <span
+                              key={tt.tag.id}
+                              className="rounded-full bg-muted px-1.5 py-0 text-[10px] font-medium text-muted-foreground"
+                            >
+                              {tt.tag.name}
+                            </span>
+                          ))}
+                        </>
+                      )}
+                      {ticket.attachments && ticket.attachments.length > 0 && (
+                        <span className="flex items-center gap-0.5 text-[10px] text-muted-foreground">
+                          <Paperclip className="h-3 w-3" />
+                          {ticket.attachments.length}
+                        </span>
+                      )}
+                    </div>
                   </div>
                   <Badge
                     variant={(statusBadge[ticket.status] || 'secondary') as any}
-                    className="shrink-0 text-xs"
+                    className="shrink-0 whitespace-nowrap text-xs"
                   >
                     {ticket.status.replace('_', ' ')}
                   </Badge>

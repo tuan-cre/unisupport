@@ -70,11 +70,8 @@ export default function AppLayout({ children }: AppLayoutProps) {
     <div className="min-h-screen bg-background">
       <header className="sticky top-0 z-40 border-b bg-background/80 backdrop-blur-md">
         <div className="mx-auto flex h-14 max-w-5xl items-center justify-between px-6">
-          <button
-            onClick={() => navigate('/tickets')}
-            className="text-lg font-bold text-foreground hover:text-blue-600 transition-colors"
-          >
-            UniSupport
+          <button onClick={() => navigate('/tickets')} className="flex items-center gap-2">
+            <img src="/logo.png" alt="UniSupport" className="h-7 w-auto" />
           </button>
 
           <div className="flex items-center gap-1 sm:gap-3">

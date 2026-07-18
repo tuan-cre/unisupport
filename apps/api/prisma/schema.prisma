@@ -64,7 +64,7 @@ model User {
   avatarUrl    String?
   status       UserStatus @default(ACTIVE)
 
-  samlId              String?    @unique
+  googleId            String?    @unique
   emailVerifiedAt     DateTime?
   emailVerificationToken String?   @unique
   loginAttempts       Int          @default(0)

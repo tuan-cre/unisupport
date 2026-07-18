@@ -21,7 +21,7 @@
 | Phase 8 — Advanced Tickets               | ✅ 100%    | Watchers, relations, time entries, templates, bulk ops                                              | —                                            |
 | Phase 9 — SLA                            | ✅ 95%     | CRUD, calendars, timestamps, ticket detail                                                          | ⚠️ BullMQ breach-detection worker            |
 | Phase 10 — Advanced ITIL                 | ✅ 100%    | Problems, Known Errors, Changes, Approvals                                                          | —                                            |
-| Phase 11 — Enterprise Auth               | ✅ 90%     | JWT, MFA/TOTP, lockout, email verify, SAML                                                          | ⚠️ LDAP/AD provider                          |
+| Phase 11 — Enterprise Auth               | ✅ 90%     | JWT, MFA/TOTP, lockout, email verify, Google OAuth                                                  | ⚠️ LDAP/AD provider                          |
 | Phase 12 — Asset & Inventory             | ✅ 100%    | Assets, assignments, licenses, checkout                                                             | —                                            |
 | Phase 13 — Reporting                     | ✅ 100%    | Volume, SLA, agent perf, real CSAT, charts, PDF export                                              | —                                            |
 | Phase 14 — Quality & Observability       | ✅ 80%     | CI, Docker, Sentry, Swagger, Prometheus metrics                                                     | ⚠️ Integration/E2E tests need real-DB wiring |

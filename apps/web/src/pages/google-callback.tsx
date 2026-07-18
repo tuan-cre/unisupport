@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import api from '../lib/api';
 
-export default function SamlCallbackPage() {
+export default function GoogleCallbackPage() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const [error, setError] = useState('');
@@ -10,12 +10,12 @@ export default function SamlCallbackPage() {
 
   useEffect(() => {
     if (!token) {
-      setError('No SAML token provided');
+      setError('No token provided');
       return;
     }
 
     api
-      .post('/auth/saml/exchange', { token })
+      .post('/auth/google/exchange', { token })
       .then((res) => {
         const data = res.data.data;
         localStorage.setItem('accessToken', data.accessToken);
@@ -23,7 +23,7 @@ export default function SamlCallbackPage() {
         navigate('/tickets');
       })
       .catch((err) => {
-        setError(err.response?.data?.message || 'SAML login failed');
+        setError(err.response?.data?.message || 'Google login failed');
       });
   }, [token, navigate]);
 
@@ -46,7 +46,7 @@ export default function SamlCallbackPage() {
   return (
     <main className="flex min-h-screen items-center justify-center bg-gradient-to-b from-background via-background to-background dark:from-background dark:via-background dark:to-background p-8">
       <div className="w-full max-w-sm text-center">
-        <p className="text-lg text-muted-foreground">Completing SAML login...</p>
+        <p className="text-lg text-muted-foreground">Completing sign in...</p>
       </div>
     </main>
   );

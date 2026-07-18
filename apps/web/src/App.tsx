@@ -15,7 +15,7 @@ import ForgotPasswordPage from './pages/forgot-password';
 import ResetPasswordPage from './pages/reset-password';
 import ChangePasswordPage from './pages/change-password';
 import MfaPage from './pages/mfa';
-import SamlCallbackPage from './pages/saml-callback';
+import GoogleCallbackPage from './pages/google-callback';
 import AdminUsersPage from './pages/admin/users';
 import AdminRolesPage from './pages/admin/roles';
 import AdminDepartmentsPage from './pages/admin/departments';
@@ -48,7 +48,7 @@ export default function App() {
                 <Route path="/forgot-password" element={<ForgotPasswordPage />} />
                 <Route path="/reset-password" element={<ResetPasswordPage />} />
                 <Route path="/mfa" element={<MfaPage />} />
-                <Route path="/auth/saml/callback" element={<SamlCallbackPage />} />
+                <Route path="/auth/google/callback" element={<GoogleCallbackPage />} />
                 <Route
                   path="/change-password"
                   element={

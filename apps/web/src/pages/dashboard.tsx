@@ -289,7 +289,10 @@ export default function DashboardPage() {
                         </p>
                       </div>
                       <div className="ml-4 flex items-center gap-2">
-                        <Badge variant={(statusBadge[t.status] || 'secondary') as any}>
+                        <Badge
+                          variant={(statusBadge[t.status] || 'secondary') as any}
+                          className="whitespace-nowrap"
+                        >
                           {t.status.replace('_', ' ')}
                         </Badge>
                         <span className="text-xs text-muted-foreground">

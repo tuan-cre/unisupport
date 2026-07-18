@@ -42,7 +42,7 @@
     "signInDev": "Đăng nhập (dev)",
     "signInDevDesc": "Chọn tài khoản mẫu để đăng nhập nhanh.",
     "noAccount": "Chưa có tài khoản?",
-    "universitySSO": "Đăng nhập bằng University SSO",
+    "signInWithGoogle": "Đăng nhập bằng Google",
     "back": "Quay lại",
     "backToTickets": "Quay lại danh sách yêu cầu",
     "ticketNotFound": "Không tìm thấy yêu cầu.",

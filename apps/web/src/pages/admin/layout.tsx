@@ -16,17 +16,17 @@ import {
 } from 'lucide-react';
 
 const navItems = [
-  { to: '/admin/users', label: 'adminUsers', icon: Users },
-  { to: '/admin/roles', label: 'adminRoles', icon: Shield },
-  { to: '/admin/departments', label: 'adminDepartments', icon: Building2 },
-  { to: '/admin/kb', label: 'adminKb', icon: BookOpen },
-  { to: '/admin/slas', label: 'adminSlas', icon: Clock },
-  { to: '/admin/reports', label: 'adminReports', icon: BarChart3 },
-  { to: '/admin/problems', label: 'adminProblems', icon: AlertTriangle },
-  { to: '/admin/known-errors', label: 'adminKnownErrors', icon: Bug },
-  { to: '/admin/changes', label: 'adminChanges', icon: GitCompare },
-  { to: '/admin/assets', label: 'adminAssets', icon: Package },
-  { to: '/admin/chat', label: 'adminChat', icon: MessageCircle },
+  { to: '/admin/users', label: 'page.adminUsers', icon: Users },
+  { to: '/admin/roles', label: 'page.adminRoles', icon: Shield },
+  { to: '/admin/departments', label: 'page.adminDepartments', icon: Building2 },
+  { to: '/admin/kb', label: 'page.adminKb', icon: BookOpen },
+  { to: '/admin/slas', label: 'page.adminSlas', icon: Clock },
+  { to: '/admin/reports', label: 'page.adminReports', icon: BarChart3 },
+  { to: '/admin/problems', label: 'page.adminProblems', icon: AlertTriangle },
+  { to: '/admin/known-errors', label: 'page.adminKnownErrors', icon: Bug },
+  { to: '/admin/changes', label: 'page.adminChanges', icon: GitCompare },
+  { to: '/admin/assets', label: 'page.adminAssets', icon: Package },
+  { to: '/admin/chat', label: 'page.adminChat', icon: MessageCircle },
 ];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {

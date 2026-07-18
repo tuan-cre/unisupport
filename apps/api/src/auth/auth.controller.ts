@@ -194,42 +194,36 @@ export class AuthController {
     return { success: true, message: 'Account anonymized' };
   }
 
-  // --- SAML SSO ---
+  // --- Google OAuth ---
 
-  @ApiOperation({ summary: 'Initiate SAML SSO login' })
-  @Get('saml/login')
-  @UseGuards(AuthGuard('saml'))
-  async samlLogin() {
-    // Passport handles the redirect to IdP
+  @ApiOperation({ summary: 'Initiate Google OAuth login' })
+  @Get('google/login')
+  @UseGuards(AuthGuard('google'))
+  async googleLogin() {
+    // Passport handles the redirect to Google
   }
 
-  @ApiOperation({ summary: 'SAML SSO callback (ACS)' })
-  @Post('saml/callback')
-  @UseGuards(AuthGuard('saml'))
-  async samlCallback(@Req() req: Request, @Res() res: Response) {
+  @ApiOperation({ summary: 'Google OAuth callback' })
+  @Get('google/callback')
+  @UseGuards(AuthGuard('google'))
+  async googleCallback(@Req() req: Request, @Res() res: Response) {
     const profile = req.user as unknown as {
-      nameID: string;
+      googleId: string;
       email: string;
       firstName: string;
       lastName: string;
     };
-    const { user } = await this.auth.handleSamlLogin(profile);
-    const samlToken = this.auth.signSamlToken(user.id);
+    const { user } = await this.auth.handleGoogleLogin(profile);
+    const token = this.auth.signExchangeToken(user.id);
     const webOrigin = this.config.getOrThrow<string>('WEB_ORIGIN');
-    res.redirect(`${webOrigin}/auth/saml/callback?token=${samlToken}`);
+    res.redirect(`${webOrigin}/auth/google/callback?token=${token}`);
   }
 
-  @ApiOperation({ summary: 'Exchange SAML token for JWT tokens' })
+  @ApiOperation({ summary: 'Exchange Google OAuth token for JWT tokens' })
   @HttpCode(HttpStatus.OK)
-  @Post('saml/exchange')
-  async exchangeSamlToken(@Body() dto: TokenOnlyDto) {
-    const result = await this.auth.exchangeSamlToken(dto.token);
-    return { success: true, message: 'SAML login successful', data: result };
-  }
-
-  @ApiOperation({ summary: 'Get SAML SP metadata XML' })
-  @Get('saml/metadata')
-  async samlMetadata(@Req() req: Request, @Res() res: Response) {
-    res.status(501).json({ message: 'Metadata endpoint requires SAML to be configured' });
+  @Post('google/exchange')
+  async exchangeGoogleToken(@Body() dto: TokenOnlyDto) {
+    const result = await this.auth.exchangeGoogleToken(dto.token);
+    return { success: true, message: 'Google login successful', data: result };
   }
 }
