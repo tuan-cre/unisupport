@@ -8,3 +8,21 @@ coverage
 .DS_Store
 apps/web/vite.config.d.ts
 apps/web/vite.config.js
+
+# Screenshots
+screenshots/
+
+# Vite cache
+.vite/
+
+# Logs
+*.log
+
+# IDE
+.vscode/
+.idea/
+Thumbs.db
+
+# Project docs (not part of source)
+AGENTS.md
+ROADMAP.md
