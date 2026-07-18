@@ -106,13 +106,14 @@ export default function ProfilePage() {
                 <Badge variant="secondary">{t('common.disabled')}</Badge>
               )}
             </p>
-            <div className="flex justify-center gap-2 pt-1">
-              <Button variant="outline" onClick={() => navigate('/change-password')}>
+            <div className="flex flex-wrap justify-center gap-2 pt-1">
+              <Button variant="outline" size="sm" onClick={() => navigate('/change-password')}>
                 {t('page.changePassword')}
               </Button>
               {user?.totpEnabled ? (
                 <Button
                   variant="outline"
+                  size="sm"
                   onClick={async () => {
                     await api.post('/auth/mfa/disable');
                     refreshUser();
@@ -124,6 +125,7 @@ export default function ProfilePage() {
               ) : (
                 <Button
                   variant="outline"
+                  size="sm"
                   onClick={async () => {
                     const res = await api.post('/auth/mfa/enable');
                     setMfaSecret(res.data.data.secret);
